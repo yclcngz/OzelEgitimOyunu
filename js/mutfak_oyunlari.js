@@ -1,12 +1,12 @@
 // 7 Mutfak Nesnesi Veritabanı
 const kitchenItems = [
-    { id: 'tabak', image: 'assets/images/tabak.png', audio: 'assets/sounds/isim_tabak.mp3' },
-    { id: 'bardak', image: 'assets/images/bardak.png', audio: 'assets/sounds/isim_bardak.mp3' },
-    { id: 'kasik', image: 'assets/images/kasik.png', audio: 'assets/sounds/isim_kasik.mp3' },
-    { id: 'catal', image: 'assets/images/catal.png', audio: 'assets/sounds/isim_catal.mp3' },
-    { id: 'tencere', image: 'assets/images/tencere.png', audio: 'assets/sounds/isim_tencere.mp3' },
-    { id: 'tava', image: 'assets/images/tava.png', audio: 'assets/sounds/isim_tava.mp3' },
-    { id: 'ekmek', image: 'assets/images/ekmek.png', audio: 'assets/sounds/isim_ekmek.mp3' }
+    { id: 'tabak', image: 'assets/images/mutfak/tabak.png', audio: 'assets/sounds/isim_tabak.mp3' },
+    { id: 'bardak', image: 'assets/images/mutfak/bardak.png', audio: 'assets/sounds/isim_bardak.mp3' },
+    { id: 'kasik', image: 'assets/images/mutfak/kasik.png', audio: 'assets/sounds/isim_kasik.mp3' },
+    { id: 'catal', image: 'assets/images/mutfak/catal.png', audio: 'assets/sounds/isim_catal.mp3' },
+    { id: 'tencere', image: 'assets/images/mutfak/tencere.png', audio: 'assets/sounds/isim_tencere.mp3' },
+    { id: 'tava', image: 'assets/images/mutfak/tava.png', audio: 'assets/sounds/isim_tava.mp3' },
+    { id: 'ekmek', image: 'assets/images/mutfak/ekmek.png', audio: 'assets/sounds/isim_ekmek.mp3' }
 ];
 
 // --- SEVİYE 1 SESLERİ ---
@@ -233,7 +233,7 @@ function checkMatchLvl2() {
     selectedLeft = null; selectedRight = null;
 
     if (curL.id === curR.id) {
-        audioOnay.play();
+        audioOnay.cloneNode().play();
         curL.img.className = 'fruit-item matched-fruit';
         curR.img.className = 'fruit-item matched-fruit';
         
@@ -256,7 +256,7 @@ function checkMatchLvl2() {
             isProcessing = false;
         }
     } else {
-        audioDat.play();
+        audioDat.cloneNode().play();
         curL.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curR.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curL.img.classList.add('shake'); curR.img.classList.add('shake');
@@ -324,7 +324,7 @@ function flipCard() {
     if (firstCard.dataset.id === secondCard.dataset.id) {
         firstCard.removeEventListener('click', flipCard);
         secondCard.removeEventListener('click', flipCard);
-        audioOnay.play();
+        audioOnay.cloneNode().play();
         matchedPairsLvl3++;
         resetBoard();
 
@@ -333,7 +333,7 @@ function flipCard() {
         }
     } else {
         lockBoard = true;
-        audioDat.play();
+        audioDat.cloneNode().play();
         setTimeout(() => {
             firstCard.classList.remove('flipped');
             secondCard.classList.remove('flipped');
@@ -372,8 +372,12 @@ function showLevelCompleteCelebration() {
         triggerGrandConfetti(); 
 
         setTimeout(() => {
-            overlay.classList.add('hidden');
-            window.location.href = 'nesneler_menu.html';
+            content.innerHTML += `
+                <div class="end-game-buttons">
+                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                    <button class="back-to-menu-btn" onclick="window.location.href='nesneler_menu.html'">⬅ Menüye Dön</button>
+                </div>
+            `;
         }, 6000); 
     }
 }

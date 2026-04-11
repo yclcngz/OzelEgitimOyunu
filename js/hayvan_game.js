@@ -7,7 +7,7 @@ const animalNames = [
 // Hayvanların tam verisini otomatik oluşturan liste
 const allAnimalsData = animalNames.map(name => ({
     id: name,
-    image: `assets/images/${name}.png`,
+    image: `assets/images/hayvanlar/${name}.png`,
     audio: `assets/sounds/soru_${name}.mp3`,
     correctAudio: `assets/sounds/dogru_${name}.mp3`,
     wrongAudio: `assets/sounds/isim_${name}.mp3`
@@ -194,8 +194,12 @@ function showLevelCompleteCelebration() {
         triggerGrandConfetti();
 
         setTimeout(() => {
-            overlay.classList.add('hidden');
-            window.location.href = 'hayvanlar_menu.html';
+            content.innerHTML += `
+                <div class="end-game-buttons">
+                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                    <button class="back-to-menu-btn" onclick="window.location.href='hayvanlar_menu.html'">⬅ Menüye Dön</button>
+                </div>
+            `;
         }, 6000);
     }
 }

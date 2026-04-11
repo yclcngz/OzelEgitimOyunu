@@ -7,7 +7,60 @@ const nextBtn = document.getElementById('nextBtn');
 
 const baseTitle = titleEl ? titleEl.textContent : '';
 let currentIndex = 0;
+let lastPlayedIndex = -1;
 
+// --- Şarkı Oynatma Mantığı ---
+let currentAudio = null;
+let currentSongBtn = null;
+
+function stopAllSongs() {
+    if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+    if (currentSongBtn) {
+        currentSongBtn.classList.remove('playing');
+        currentSongBtn.textContent = 'DİNLE';
+    }
+    currentAudio = null;
+    currentSongBtn = null;
+}
+
+function playSongBtn(btn) {
+    if (currentSongBtn === btn && currentAudio && !currentAudio.paused) {
+        return; // Zaten bu şarkı çalıyorsa devam etsin
+    }
+    
+    stopAllSongs();
+
+    const src = btn.dataset.song;
+    if (!src) return;
+
+    currentAudio = new Audio(src);
+    currentSongBtn = btn;
+    btn.classList.add('playing');
+    btn.textContent = 'ÇALIYOR';
+
+    const playPromise = currentAudio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(e => {
+            console.log("Tarayıcı otomatik oynatmayı engelledi, kullanıcı etkileşimi bekleniyor.");
+            btn.classList.remove('playing');
+            btn.textContent = 'DİNLE';
+            currentAudio = null;
+            currentSongBtn = null;
+        });
+    }
+    
+    currentAudio.onended = () => {
+        btn.classList.remove('playing');
+        btn.textContent = 'DİNLE';
+        currentAudio = null;
+        currentSongBtn = null;
+    };
+}
+
+// --- UI Güncelleme ---
 function updateUI(index) {
     currentIndex = index;
     dots.forEach((d, i) => d.classList.toggle('active', i === index));
@@ -16,12 +69,29 @@ function updateUI(index) {
     }
     if (prevBtn) prevBtn.style.opacity = index === 0 ? '0.3' : '1';
     if (nextBtn) nextBtn.style.opacity = index === cards.length - 1 ? '0.3' : '1';
+
+    // Yeni menüye geçildiğinde otomatik şarkı başlat
+    if (index !== lastPlayedIndex) {
+        lastPlayedIndex = index;
+        const currentCard = cards[index];
+        if (currentCard) {
+            const songBtn = currentCard.querySelector('.song-btn');
+            if (songBtn) {
+                playSongBtn(songBtn);
+            } else {
+                stopAllSongs();
+            }
+        }
+    }
 }
 
 if (carousel) {
     carousel.addEventListener('scroll', () => {
+        // Kaydırma bitmeye yaklaştığında index'i güncelle
         const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
-        updateUI(index);
+        if (index !== currentIndex) {
+            updateUI(index);
+        }
     });
 }
 
@@ -47,51 +117,29 @@ dots.forEach((dot, i) => {
     });
 });
 
-updateUI(0);
-
-// --- Şarkı Butonu ---
-let currentAudio = null;
-let currentSongBtn = null;
-
 document.querySelectorAll('.song-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
 
-        const src = this.dataset.song;
-
-        // Aynı butona tekrar basılınca durdur
         if (currentSongBtn === this && currentAudio && !currentAudio.paused) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            this.classList.remove('playing');
-            this.textContent = 'Şarkıyı Dinle';
-            currentAudio = null;
-            currentSongBtn = null;
-            return;
+            stopAllSongs(); // Aynı butona basarsa durdur
+        } else {
+            playSongBtn(this); // Oynat
         }
-
-        // Başka bir şarkı çalıyorsa durdur
-        if (currentAudio && !currentAudio.paused) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            if (currentSongBtn) {
-                currentSongBtn.classList.remove('playing');
-                currentSongBtn.textContent = 'Şarkıyı Dinle';
-            }
-        }
-
-        currentAudio = new Audio(src);
-        currentSongBtn = this;
-        this.classList.add('playing');
-        this.textContent = 'Çalıyor...';
-
-        currentAudio.play().catch(() => {});
-        currentAudio.onended = () => {
-            this.classList.remove('playing');
-            this.textContent = 'Şarkıyı Dinle';
-            currentAudio = null;
-            currentSongBtn = null;
-        };
     });
 });
+
+// Tarayıcı kısıtlamalarına karşı yedek: Ekrana ilk dokunmada eğer ilk şarkı çalmadıysa başlat
+document.addEventListener('click', () => {
+    if (lastPlayedIndex === 0 && currentAudio === null) {
+        const firstCard = cards[0];
+        if (firstCard) {
+            const firstBtn = firstCard.querySelector('.song-btn');
+            if (firstBtn) playSongBtn(firstBtn);
+        }
+    }
+}, { once: true });
+
+// İlk açılışta 1. slaytı aktifleştir (otomatik müziği tetikler)
+updateUI(0);

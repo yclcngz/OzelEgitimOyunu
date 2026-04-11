@@ -187,8 +187,12 @@ function showGrandFinaleCelebration() {
     triggerGrandConfetti(); 
 
     setTimeout(() => {
-        overlay.classList.add('hidden');
-        window.location.href = 'sekiller_menu.html';
+        content.innerHTML += `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='sekiller_menu.html'">⬅ Menüye Dön</button>
+            </div>
+        `;
     }, 6000); 
 }
 

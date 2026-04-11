@@ -8,7 +8,7 @@ const fruitNames = [
 // Meyvelerin tam verisini otomatik oluşturan liste
 const allFruitsData = fruitNames.map(name => ({
     id: name,
-    image: `assets/images/${name}.png`,
+    image: `assets/images/meyveler/${name}.png`,
     audio: `assets/sounds/soru_${name}.mp3`,
     correctAudio: `assets/sounds/dogru_${name}.mp3`,
     wrongAudio: `assets/sounds/isim_${name}.mp3`
@@ -84,16 +84,31 @@ function startLevel(levelNumber) {
     renderStage();
 }
 
-// Görsel sayısına göre grid düzeni ve boyut hesaplar
+// Görsel sayısına göre grid düzeni ve boyut hesaplar (Akıllı Boyutlandırma)
 function calcLayout(n) {
-    const cols = n <= 2 ? 2 : n <= 4 ? 2 : 3;
+    const isMobile = window.innerWidth <= 600;
+    
+    // Özel Eğitim Çocukları için mobilde maksimum 2 sütun (büyük nesneler)
+    const cols = isMobile ? (n === 1 ? 1 : 2) : (n <= 4 ? 2 : 3);
     const rows = Math.ceil(n / cols);
-    const gap = 12;
-    const availW = window.innerWidth - 48;
-    const availH = window.innerHeight - 90; // header + audio-btn + padding
+    const gap = isMobile ? 16 : 24;
+    
+    const availW = window.innerWidth - 48; // Ekran genişliği payı
     const itemW = (availW - gap * (cols - 1)) / cols;
-    const itemH = (availH - gap * (rows - 1)) / rows;
-    const size = Math.floor(Math.min(itemW, itemH, 280));
+    
+    // Dikey alana zorla sığdırmak yerine mobilde serbest bırakıyoruz
+    // Bilgisayarda ise tam ekrana sığsın
+    const availH = window.innerHeight - 120;
+    const itemH = isMobile ? itemW : (availH - gap * (rows - 1)) / rows;
+    
+    // Boyutu seç, asla çok küçültme
+    let size = Math.floor(Math.min(itemW, itemH, 260));
+    
+    // Çok küçülüyorsa tam sığdırmayı bırak, genişliğe göre büyüt
+    if (size < 140 && isMobile) {
+        size = itemW; 
+    }
+    
     return { size, cols, gap };
 }
 
@@ -239,15 +254,13 @@ function showLevelCompleteCelebration() {
         audioGrandFinale.play(); // Coşkulu zafer müziğini çal
         triggerGrandConfetti(); // 5 saniyelik sürekli havai fişek konfetisi başlat
 
-        // Şov bittikten sonra ana menüye yönlendir
         setTimeout(() => {
-            overlay.classList.add('hidden');
-            // Hangi oyundaysak onun menüsüne döner
-            if(window.location.pathname.includes('eslestirme')) {
-                window.location.href = 'meyveler_menu.html';
-            } else {
-                window.location.href = 'index.html'; // Veya meyveler_menu.html yapabilirsin
-            }
+            content.innerHTML += `
+                <div class="end-game-buttons">
+                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
+                </div>
+            `;
         }, 6000); 
     }
 }

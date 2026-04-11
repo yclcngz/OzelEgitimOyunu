@@ -6,7 +6,7 @@ const fruitNames = [
 
 const allFruitsData = fruitNames.map(name => ({
     id: name,
-    image: `assets/images/${name}.png`
+    image: `assets/images/meyveler/${name}.png`
 }));
 
 // Sesler
@@ -141,7 +141,7 @@ function disableCards() {
     firstCard.removeEventListener('click', flipCard);
     secondCard.removeEventListener('click', flipCard);
     
-    audioOnay.play();
+    audioOnay.cloneNode().play();
     matchedPairsCount++;
 
     resetBoard();
@@ -162,7 +162,7 @@ function disableCards() {
 
 function unflipCards() {
     lockBoard = true; // Dönme işlemi bitene kadar diğer kartlara tıklanmasın
-    audioDat.play(); // Hata sesi (İsteğe bağlı, istersen bu satırı silebilirsin)
+    audioDat.cloneNode().play(); // Hata sesi (İsteğe bağlı, istersen bu satırı silebilirsin)
 
     setTimeout(() => {
         firstCard.classList.remove('flipped');
@@ -209,8 +209,12 @@ function showLevelCompleteCelebration() {
         triggerGrandConfetti(); 
 
         setTimeout(() => {
-            overlay.classList.add('hidden');
-            window.location.href = 'meyveler_menu.html';
+            content.innerHTML += `
+                <div class="end-game-buttons">
+                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
+                </div>
+            `;
         }, 6000); 
     }
 }

@@ -167,7 +167,7 @@ function addTouchSupport(dragItem) {
         const basketColor   = el.dataset.color;
 
         if (draggedColor === basketColor) {
-            audioOnay.play();
+            audioOnay.cloneNode().play();
             triggerConfettiMini();
             dragItem.classList.add('hidden-drag');
             itemsSuccessfullyDropped++;
@@ -178,7 +178,7 @@ function addTouchSupport(dragItem) {
                 }, 1000);
             }
         } else {
-            audioDat.play();
+            audioDat.cloneNode().play();
             dragItem.classList.add('shake');
             setTimeout(() => dragItem.classList.remove('shake'), 500);
         }
@@ -225,7 +225,7 @@ function handleDrop(e) {
 
     if (draggedColor === basketColor) {
         // --- DOĞRU SEPET ---
-        audioOnay.play();
+        audioOnay.cloneNode().play();
         triggerConfettiMini();
         
         // Kartı görünmez yap (sanki sepetin içine girmiş gibi)
@@ -292,8 +292,12 @@ function showGrandFinaleCelebration() {
     triggerGrandConfetti(); 
 
     setTimeout(() => {
-        overlay.classList.add('hidden');
-        window.location.href = 'renkler_menu.html';
+        content.innerHTML += `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='renkler_menu.html'">⬅ Menüye Dön</button>
+            </div>
+        `;
     }, 6000); 
 }
 

@@ -6,7 +6,7 @@ const fruitNames = [
 
 const allFruitsData = fruitNames.map(name => ({
     id: name,
-    image: `assets/images/${name}.png`
+    image: `assets/images/meyveler/${name}.png`
 }));
 
 // Ses Dosyaları
@@ -59,6 +59,7 @@ function generateStagesForLevel(levelNumber) {
 }
 
 function startLevel(levelNumber) {
+    if (levelNumber > 4) levelNumber = 4; // Dev menü ile 5'e basılsa bile en fazla 4. seviye açılır
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
@@ -148,7 +149,7 @@ function checkMatch() {
 
     if (currentLeft.id === currentRight.id) {
         // --- DOĞRU EŞLEŞTİRME ---
-        audioOnay.play();
+        audioOnay.cloneNode().play();
         
         currentLeft.img.classList.remove('selected-fruit');
         currentRight.img.classList.remove('selected-fruit');
@@ -174,7 +175,7 @@ function checkMatch() {
 
     } else {
         // --- YANLIŞ EŞLEŞTİRME ---
-        audioDat.play();
+        audioDat.cloneNode().play();
 
         const crossL = currentLeft.wrap.querySelector('.cross-mark');
         const crossR = currentRight.wrap.querySelector('.cross-mark');
@@ -211,7 +212,7 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
 
     if (currentLevelNumber < 4) {
-        // --- NORMAL SEVİYE SONU (1, 2, 3, 4) ---
+        // --- NORMAL SEVİYE SONU (1, 2, 3) ---
         content.innerHTML = '🤩👏'; 
         content.className = 'celebration-content'; // Eski class'ı koru
         audioLevelComplete.play();
@@ -223,7 +224,7 @@ function showLevelCompleteCelebration() {
         };
    // ... (Fonksiyonun üst kısmı aynı kalıyor) ...
     } else {
-        // --- BÜYÜK FİNAL (SEVİYE 5 SONU) ---
+        // --- BÜYÜK FİNAL (SEVİYE 4 SONU) ---
         
         // --- DEĞİŞİKLİK BURADA: Emojiyi silip GIF ekliyoruz ---
         // content.innerHTML = '🏆'; // Eski kupa emojisi satırını sildik veya yorum satırı yaptık.
@@ -238,15 +239,13 @@ function showLevelCompleteCelebration() {
         audioGrandFinale.play(); // Coşkulu zafer müziğini çal
         triggerGrandConfetti(); // 5 saniyelik sürekli havai fişek konfetisi başlat
 
-        // Şov bittikten sonra ana menüye yönlendir
         setTimeout(() => {
-            overlay.classList.add('hidden');
-            // Hangi oyundaysak onun menüsüne döner
-            if(window.location.pathname.includes('eslestirme')) {
-                window.location.href = 'meyveler_menu.html';
-            } else {
-                window.location.href = 'index.html'; // Veya meyveler_menu.html yapabilirsin
-            }
+            content.innerHTML += `
+                <div class="end-game-buttons">
+                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
+                </div>
+            `;
         }, 6000); 
     }
 }

@@ -19,10 +19,12 @@
 
     <div class="carousel-header">
         <a href="meyveler_menu.html" class="back-btn-carousel">⬅</a>
-        <button id="play-audio-btn" class="audio-btn header-audio-btn">🔊 Sesi Tekrar Dinle</button>
     </div>
 
     <div class="game-container fruit-game-container" style="max-width: 1200px;">
+        <!-- 'Sesi Tekrar Dinle' butonu menü çakışmasını önlemek için oyun kutusuna alındı -->
+        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+
         <div class="matching-board">
             <div id="left-column" class="match-column"></div>
             <div id="right-column" class="match-column"></div>
@@ -30,5 +32,6 @@
     </div>
 
     <script src="js/eslestirme.js"></script>
+    <script src="js/common_bgm.js"></script>
 </body>
 </html>

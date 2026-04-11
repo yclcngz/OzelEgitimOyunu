@@ -114,7 +114,7 @@ function renderListenStage(stage) {
         const card = document.createElement('div');
         card.classList.add('animal-sound-card');
         card.innerHTML = `
-            <img src="assets/images/${animal.id}.png" alt="${animal.name}">
+            <img src="assets/images/hayvanlar/${animal.id}.png" alt="${animal.name}">
             <div class="animal-name">${animal.name}</div>
             <div class="sound-icon">🔊</div>
         `;
@@ -157,7 +157,7 @@ function renderQuizStage(stage) {
         const card = document.createElement('div');
         card.classList.add('choice-card');
         card.innerHTML = `
-            <img src="assets/images/${animal.id}.png" alt="${animal.name}">
+            <img src="assets/images/hayvanlar/${animal.id}.png" alt="${animal.name}">
             <div class="choice-name">${animal.name}</div>
             <div class="cross-mark">❌</div>
         `;
@@ -180,7 +180,7 @@ function handleChoice(chosen, correct, card) {
         stopCurrentAudio();
         card.classList.add('correct');
         audioOnay.currentTime = 0;
-        audioOnay.play();
+        audioOnay.cloneNode().play();
         triggerConfetti();
 
         setTimeout(() => {
@@ -197,7 +197,7 @@ function handleChoice(chosen, correct, card) {
         quizLocked = true;
         card.classList.add('wrong');
         audioDat.currentTime = 0;
-        audioDat.play();
+        audioDat.cloneNode().play();
 
         setTimeout(() => {
             card.classList.remove('wrong');
@@ -233,8 +233,12 @@ function showCelebration() {
     audioGrandFinale.play();
     triggerGrandConfetti();
     setTimeout(() => {
-        overlay.classList.add('hidden');
-        window.location.href = 'hayvanlar_menu.html';
+        content.innerHTML += `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='hayvanlar_menu.html'">⬅ Menüye Dön</button>
+            </div>
+        `;
     }, 6000);
 }
 
