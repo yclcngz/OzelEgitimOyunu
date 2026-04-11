@@ -1,0 +1,260 @@
+const allAnimals = [
+    { id: "kedi",   name: "Kedi" },
+    { id: "kopek",  name: "Köpek" },
+    { id: "kus",    name: "Kuş" },
+    { id: "at",     name: "At" },
+    { id: "inek",   name: "İnek" },
+    { id: "koyun",  name: "Koyun" },
+    { id: "tavsan", name: "Tavşan" },
+    { id: "ayi",    name: "Ayı" },
+    { id: "aslan",  name: "Aslan" },
+    { id: "fil",    name: "Fil" },
+    { id: "zebra",  name: "Zebra" },
+    { id: "zurafa", name: "Zürafa" },
+    { id: "maymun", name: "Maymun" },
+    { id: "kaplan", name: "Kaplan" },
+    { id: "kurt",   name: "Kurt" },
+    { id: "tilki",  name: "Tilki" },
+    { id: "sincap", name: "Sincap" }
+];
+
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+// 3 dinle aşaması + 17 quiz aşaması = 20 toplam
+const listenStages = [
+    { type: 'listen', animals: allAnimals.slice(0, 6) },
+    { type: 'listen', animals: allAnimals.slice(6, 12) },
+    { type: 'listen', animals: allAnimals.slice(12) }
+];
+
+const quizStages = shuffleArray([...allAnimals]).map(a => ({ type: 'quiz', correct: a }));
+const allStages = [...listenStages, ...quizStages]; // 20 aşama
+
+// Ses dosyaları
+const audioOnay = new Audio('assets/sounds/onay.mp3');
+const audioDat  = new Audio('assets/sounds/dat.mp3');
+const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
+const audioGrandFinale   = new Audio('assets/sounds/basari_fon.mp3');
+
+let currentStageIdx = 0;
+let currentAudio = null;
+let currentListenCard = null;
+let quizLocked = false;
+
+// --- YARDIMCI ---
+function stopCurrentAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.onended = null;
+        currentAudio = null;
+    }
+}
+
+function playAnimalSoundTimes(animalId, timesLeft) {
+    if (timesLeft <= 0) return;
+    const audio = new Audio(`assets/sounds/hayvan sesleri/${animalId}_ses.mp3`);
+    currentAudio = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => {
+        currentAudio = null;
+        if (timesLeft > 1) {
+            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1), 500);
+        }
+    };
+}
+
+// --- ANA RENDER ---
+function renderStage() {
+    stopCurrentAudio();
+    if (currentListenCard) { currentListenCard.classList.remove('playing'); currentListenCard = null; }
+    quizLocked = false;
+
+    const stage = allStages[currentStageIdx];
+    const stageTitle = document.getElementById('stage-title');
+    const prevBtn    = document.getElementById('stage-prev');
+    const nextBtn    = document.getElementById('stage-next');
+
+    stageTitle.textContent = `Aşama ${currentStageIdx + 1} / ${allStages.length}`;
+    prevBtn.style.opacity = currentStageIdx === 0 ? '0.3' : '1';
+    prevBtn.disabled = currentStageIdx === 0;
+    nextBtn.style.opacity = currentStageIdx === allStages.length - 1 ? '0.3' : '1';
+    nextBtn.disabled = currentStageIdx === allStages.length - 1;
+
+    if (stage.type === 'listen') {
+        document.getElementById('sounds-grid').classList.remove('hidden');
+        document.getElementById('quiz-area').classList.add('hidden');
+        renderListenStage(stage);
+    } else {
+        document.getElementById('sounds-grid').classList.add('hidden');
+        document.getElementById('quiz-area').classList.remove('hidden');
+        renderQuizStage(stage);
+    }
+}
+
+// --- DİNLE AŞAMASI ---
+function renderListenStage(stage) {
+    const grid = document.getElementById('sounds-grid');
+    grid.innerHTML = '';
+
+    // Komut sesini çal
+    setTimeout(() => {
+        const cmdAudio = new Audio('assets/sounds/hayvan_sesleri_komut.mp3');
+        cmdAudio.play().catch(() => {});
+    }, 500);
+
+    stage.animals.forEach(animal => {
+        const card = document.createElement('div');
+        card.classList.add('animal-sound-card');
+        card.innerHTML = `
+            <img src="assets/images/${animal.id}.png" alt="${animal.name}">
+            <div class="animal-name">${animal.name}</div>
+            <div class="sound-icon">🔊</div>
+        `;
+
+        card.addEventListener('click', () => {
+            if (currentListenCard === card && currentAudio && !currentAudio.paused) {
+                stopCurrentAudio();
+                card.classList.remove('playing');
+                currentListenCard = null;
+                return;
+            }
+            stopCurrentAudio();
+            if (currentListenCard) currentListenCard.classList.remove('playing');
+
+            const audio = new Audio(`assets/sounds/hayvan sesleri/${animal.id}_ses.mp3`);
+            currentAudio = audio;
+            currentListenCard = card;
+            card.classList.add('playing');
+            audio.play().catch(() => {});
+            audio.onended = () => {
+                card.classList.remove('playing');
+                currentAudio = null;
+                currentListenCard = null;
+            };
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+// --- QUIZ AŞAMASI ---
+function renderQuizStage(stage) {
+    const grid = document.getElementById('choices-grid');
+    grid.innerHTML = '';
+
+    const wrong   = shuffleArray(allAnimals.filter(a => a.id !== stage.correct.id)).slice(0, 2);
+    const choices = shuffleArray([stage.correct, ...wrong]);
+
+    choices.forEach(animal => {
+        const card = document.createElement('div');
+        card.classList.add('choice-card');
+        card.innerHTML = `
+            <img src="assets/images/${animal.id}.png" alt="${animal.name}">
+            <div class="choice-name">${animal.name}</div>
+            <div class="cross-mark">❌</div>
+        `;
+        card.addEventListener('click', () => handleChoice(animal, stage.correct, card));
+        grid.appendChild(card);
+    });
+
+        // Soru komutu → hayvan sesi x3
+    const cmdAudio = new Audio('assets/sounds/kimin_sesi.mp3');
+    cmdAudio.play().catch(() => playAnimalSoundTimes(stage.correct.id, 3));
+    cmdAudio.onended = () => playAnimalSoundTimes(stage.correct.id, 3);
+}
+
+// --- ŞIIK SEÇİMİ ---
+function handleChoice(chosen, correct, card) {
+    if (quizLocked) return;
+
+    if (chosen.id === correct.id) {
+        quizLocked = true;
+        stopCurrentAudio();
+        card.classList.add('correct');
+        audioOnay.currentTime = 0;
+        audioOnay.play();
+        triggerConfetti();
+
+        setTimeout(() => {
+            card.classList.remove('correct');
+            currentStageIdx++;
+            if (currentStageIdx < allStages.length) {
+                renderStage();
+            } else {
+                showCelebration();
+            }
+        }, 1500);
+
+    } else {
+        quizLocked = true;
+        card.classList.add('wrong');
+        audioDat.currentTime = 0;
+        audioDat.play();
+
+        setTimeout(() => {
+            card.classList.remove('wrong');
+            quizLocked = false;
+        }, 1000);
+    }
+}
+
+// --- TEKRAR DİNLE ---
+document.getElementById('replay-btn').addEventListener('click', () => {
+    const stage = allStages[currentStageIdx];
+    if (stage.type === 'quiz') {
+        stopCurrentAudio();
+        playAnimalSoundTimes(stage.correct.id, 3);
+    }
+});
+
+// --- NAVİGASYON ---
+document.getElementById('stage-prev').addEventListener('click', () => {
+    if (currentStageIdx > 0) { currentStageIdx--; renderStage(); }
+});
+
+document.getElementById('stage-next').addEventListener('click', () => {
+    if (currentStageIdx < allStages.length - 1) { currentStageIdx++; renderStage(); }
+});
+
+// --- KUTLAMA ---
+function showCelebration() {
+    const overlay = document.getElementById('celebration-overlay');
+    const content = overlay.querySelector('.celebration-content');
+    overlay.classList.remove('hidden');
+    content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
+    audioGrandFinale.play();
+    triggerGrandConfetti();
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        window.location.href = 'hayvanlar_menu.html';
+    }, 6000);
+}
+
+function triggerConfetti() {
+    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+}
+
+function triggerGrandConfetti() {
+    const duration = 5000;
+    const end = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+    function rnd(min, max) { return Math.random() * (max - min) + min; }
+    const interval = setInterval(() => {
+        const left = end - Date.now();
+        if (left <= 0) return clearInterval(interval);
+        const count = 50 * (left / duration);
+        confetti(Object.assign({}, defaults, { particleCount: count, origin: { x: rnd(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount: count, origin: { x: rnd(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
+}
+
+// --- BAŞLAT ---
+renderStage();

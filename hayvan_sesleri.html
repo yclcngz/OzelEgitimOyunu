@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hayvan Sesleri</title>
+    <meta name="theme-color" content="#22c55e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+    <style>
+        /* --- DİNLE AŞAMASI --- */
+        .sounds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .animal-sound-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 14px 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+            user-select: none;
+        }
+
+        .animal-sound-card:hover { transform: scale(1.05); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .animal-sound-card:active { transform: scale(0.96); }
+
+        .animal-sound-card.playing {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
+            transform: scale(1.07);
+        }
+
+        .animal-sound-card img { width: 90px; height: 90px; object-fit: contain; border-radius: 12px; }
+        .animal-sound-card .animal-name { font-size: 1rem; font-weight: 700; color: #334155; }
+        .animal-sound-card .sound-icon { font-size: 1.4rem; }
+        .animal-sound-card.playing .sound-icon { animation: bounce-icon 0.5s infinite alternate; }
+
+        @keyframes bounce-icon {
+            from { transform: scale(1); }
+            to   { transform: scale(1.35); }
+        }
+
+        /* --- AŞAMA NAVİGASYONU --- */
+        .stage-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px 0 4px;
+        }
+
+        .stage-nav button {
+            font-size: 1.4rem;
+            width: 48px;
+            height: 48px;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            background: #22c55e;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(34,197,94,0.35);
+            transition: transform 0.15s, opacity 0.2s;
+        }
+
+        .stage-nav button:active { transform: scale(0.92); }
+
+        .stage-nav span {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #334155;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* --- QUIZ ALANI --- */
+        #quiz-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding: 10px 16px 20px;
+            box-sizing: border-box;
+        }
+
+        .quiz-question {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1e293b;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .replay-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 26px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+            transition: transform 0.15s;
+        }
+
+        .replay-btn:active { transform: scale(0.95); }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .choice-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 14px 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.15s, border-color 0.2s;
+            user-select: none;
+        }
+
+        .choice-card:hover { transform: scale(1.05); }
+        .choice-card:active { transform: scale(0.95); }
+
+        .choice-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .choice-card .choice-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #334155;
+            text-align: center;
+        }
+
+        .choice-card .cross-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .choice-card.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+
+        .choice-card.wrong {
+            border-color: #ef4444;
+            background: #fef2f2;
+            animation: shake-card 0.5s ease;
+        }
+
+        .choice-card.wrong .cross-mark { opacity: 1; }
+
+        @keyframes shake-card {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-8px); }
+            40%       { transform: translateX(8px); }
+            60%       { transform: translateX(-6px); }
+            80%       { transform: translateX(5px); }
+        }
+
+        @media (max-width: 400px) {
+            .sounds-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px; }
+            .animal-sound-card img { width: 70px; height: 70px; }
+            .choice-card img { width: 64px; height: 64px; }
+            .quiz-question { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="celebration-overlay" class="overlay hidden">
+    <div class="celebration-content"></div>
+</div>
+
+    <div class="game-container">
+        <div class="header">
+            <a href="hayvanlar_menu.html" class="back-btn">⬅ Menüye Dön</a>
+            <h2 id="page-title">Hayvan Sesleri</h2>
+        </div>
+
+        <div class="stage-nav">
+            <button id="stage-prev">&#8592;</button>
+            <span id="stage-title">Aşama 1 / 20</span>
+            <button id="stage-next">&#8594;</button>
+        </div>
+
+        <!-- Dinle aşaması -->
+        <div class="sounds-grid" id="sounds-grid"></div>
+
+        <!-- Quiz aşaması -->
+        <div id="quiz-area" class="hidden">
+            <div class="quiz-question">Bu ses hangi hayvana ait?</div>
+            <button class="replay-btn" id="replay-btn">🔊 Tekrar Dinle</button>
+            <div class="choices-grid" id="choices-grid"></div>
+        </div>
+    </div>
+
+    <script src="js/hayvan_sesleri.js"></script>
+</body>
+</html>

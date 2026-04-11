@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Şekiller: Balon Patlatma</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body>
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🤩👏</div>
+    </div>
+
+    <div class="game-container" style="max-width: 900px;">
+        <div class="header">
+            <a href="sekiller_menu.html" class="back-btn">⬅ Menüye Dön</a>
+            <h2 id="level-title">Seviye 1</h2>
+            <div id="score-board" style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;">Patlatılan: 0 / 3</div>
+        </div>
+
+        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+
+        <div id="sky-area" class="sky-area">
+            </div>
+
+        <div class="target-area">
+            <h3>Bu şekli bul ve patlat:</h3>
+            <div id="target-shape-container" class="target-shape-container">
+                </div>
+        </div>
+    </div>
+
+    <script src="js/sekiller_balon.js"></script>
+</body>
+</html>

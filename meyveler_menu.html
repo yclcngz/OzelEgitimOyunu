@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Meyveler Menüsü</title>
+    <meta name="theme-color" content="#eab308">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body class="carousel-page">
+
+    <div class="carousel-header">
+        <a href="index.html" class="back-btn-carousel">⬅</a>
+    </div>
+
+    <div class="main-menu-grid" id="carousel">
+        <a href="meyveleri_taniyalim.html" class="menu-img-btn" data-title="Meyveleri Tanıyalım">
+            <img src="assets/images/meyveleri%20taniyalim.png" alt="Meyveleri Tanıyalım">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/meyveleri_taniyalim_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="eslestirme.html" class="menu-img-btn" data-title="Meyve Eşleştirme">
+            <img src="assets/images/meyve%20eslestirme.png" alt="Meyve Eşleştirme">
+            <button class="song-btn" data-song="assets/sounds/meyve_eslestirme_sarki.mp3">Şarkıyı Dinle</button>
+            <button class="play-btn">▶ Oyna</button>
+        </a>
+        <a href="bulmaca.html" class="menu-img-btn" data-title="Meyve Bulmacası">
+            <img src="assets/images/meyve%20bulmacasi.png" alt="Meyve Bulmacası">
+            <button class="song-btn" data-song="assets/sounds/meyve_bulmacasi_sarki.mp3">Şarkıyı Dinle</button>
+            <button class="play-btn">▶ Oyna</button>
+        </a>
+    </div>
+
+    <button class="carousel-arrow carousel-prev" id="prevBtn">&#8592;</button>
+    <button class="carousel-arrow carousel-next" id="nextBtn">&#8594;</button>
+
+    <div class="carousel-dots" id="dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+    </div>
+
+    <script src="js/carousel.js"></script>
+</body>
+</html>

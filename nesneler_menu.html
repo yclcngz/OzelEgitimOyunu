@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nesneler Menüsü</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body class="carousel-page">
+
+    <div class="carousel-header">
+        <a href="index.html" class="back-btn-carousel">⬅</a>
+    </div>
+
+    <div class="main-menu-grid" id="carousel">
+        <a href="mutfak_oyunlari.html" class="menu-img-btn" data-title="Mutfak">
+            <img src="assets/images/mutfak.png" alt="Mutfak">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/mutfak_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Giyim">
+            <img src="assets/images/giyim.png" alt="Giyim">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/giyim_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Ev Eşyaları">
+            <img src="assets/images/ev%20esyalari.png" alt="Ev Eşyaları">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/ev_esyalari_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Oyun ve Eğlence">
+            <img src="assets/images/oyun.png" alt="Oyun ve Eğlence">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/oyunlari_tani_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Ulaşım">
+            <img src="assets/images/ulasim.png" alt="Ulaşım">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/ulasim_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Okul">
+            <img src="assets/images/okul.png" alt="Okul">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/okul_esyalari_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+        <a href="#" class="menu-img-btn" data-title="Doğa">
+            <img src="assets/images/doga.png" alt="Doğa">
+            <button class="play-btn">▶ Oyna</button>
+            <button class="song-btn" data-song="assets/sounds/doga_sarki.mp3">Şarkıyı Dinle</button>
+        </a>
+    </div>
+
+    <button class="carousel-arrow carousel-prev" id="prevBtn">&#8592;</button>
+    <button class="carousel-arrow carousel-next" id="nextBtn">&#8594;</button>
+
+    <div class="carousel-dots" id="dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+    </div>
+
+    <script src="js/carousel.js"></script>
+</body>
+</html>

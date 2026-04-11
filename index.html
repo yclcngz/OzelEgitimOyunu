@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Özel Eğitim Oyunu</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EğitimOyunu">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body class="carousel-page">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <video id="splash-video" src="assets/sounds/momo.mp4" autoplay muted playsinline></video>
+        <button id="splash-sound-btn">🔇</button>
+    </div>
+
+    <div class="carousel-header"></div>
+
+    <div class="main-menu-grid" id="carousel">
+        <a href="meyveler_menu.html" class="menu-img-btn" data-title="Meyveler">
+            <button class="explore-btn">👆 Keşfet!</button>
+            <img src="assets/images/meyveler.png" alt="Meyveler">
+        </a>
+        <a href="renkler_menu.html" class="menu-img-btn" data-title="Renkler">
+            <button class="explore-btn">👆 Keşfet!</button>
+            <img src="assets/images/renkler.png" alt="Renkler">
+        </a>
+        <a href="sekiller_menu.html" class="menu-img-btn" data-title="Şekiller">
+            <button class="explore-btn">👆 Keşfet!</button>
+            <img src="assets/images/sekiller.png" alt="Şekiller">
+        </a>
+        <a href="nesneler_menu.html" class="menu-img-btn" data-title="Nesneler">
+            <button class="explore-btn">👆 Keşfet!</button>
+            <img src="assets/images/nesneler.png" alt="Nesneler">
+        </a>
+        <a href="hayvanlar_menu.html" class="menu-img-btn" data-title="Hayvanlar">
+            <button class="explore-btn">👆 Keşfet!</button>
+            <img src="assets/images/hayvanlar.png" alt="Hayvanlar">
+        </a>
+    </div>
+
+    <button class="carousel-arrow carousel-prev" id="prevBtn">&#8592;</button>
+    <button class="carousel-arrow carousel-next" id="nextBtn">&#8594;</button>
+
+    <div class="carousel-dots" id="dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+    </div>
+
+    <script src="js/carousel.js"></script>
+    <script>
+        (function() {
+            const splash = document.getElementById('splash-screen');
+            const video = document.getElementById('splash-video');
+            const DURATION = 8000;
+
+            function hideSplash() {
+                sessionStorage.setItem('splashSeen', '1');
+                splash.classList.add('fade-out');
+                setTimeout(() => splash.classList.add('hidden'), 650);
+            }
+
+            // Daha önce görüldüyse anında gizle
+            if (sessionStorage.getItem('splashSeen')) {
+                splash.classList.add('hidden');
+            } else {
+                video.addEventListener('ended', hideSplash);
+                video.addEventListener('error', () => setTimeout(hideSplash, DURATION));
+                setTimeout(hideSplash, DURATION);
+            }
+
+            // Ses butonu
+            const soundBtn = document.getElementById('splash-sound-btn');
+            soundBtn.addEventListener('click', function() {
+                video.muted = !video.muted;
+                if (!video.muted) { video.play(); }
+                soundBtn.textContent = video.muted ? '🔇' : '🔊';
+            });
+        })();
+    </script>
+
+</body>
+</html>

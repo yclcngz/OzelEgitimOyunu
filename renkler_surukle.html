@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Renkler: Sürükle - Bırak</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body>
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🤩👏</div>
+    </div>
+
+    <div class="game-container" style="max-width: 1000px;">
+        <div class="header">
+            <a href="renkler_menu.html" class="back-btn">⬅ Menüye Dön</a>
+            <h2 id="level-title">Seviye 1</h2>
+        </div>
+
+        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+
+        <div id="baskets-container" class="baskets-container">
+            </div>
+
+        <div id="draggables-container" class="draggables-container">
+            </div>
+    </div>
+
+    <script src="js/renkler_surukle.js"></script>
+</body>
+</html>
