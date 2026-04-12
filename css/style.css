@@ -591,29 +591,79 @@ body.carousel-page {
 
 /* --- ORTAK ARKA PLAN MÜZİĞİ BUTONU --- */
 .global-bgm-btn {
-    position: absolute;
-    top: 24px;
-    right: 24px;
+    position: fixed;
+    top: 18px;
+    right: 16px;
     z-index: 9999;
-    background: #ffffff;
-    color: #3b82f6;
-    border: 3px solid #bfdbfe;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #ffffff;
+    border: 3px solid #ffffff;
     padding: 8px 16px;
     border-radius: 50px;
     font-size: 1rem;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: all 0.2s;
+    box-shadow: 0 4px 0 #1d4ed8, 0 8px 20px rgba(59,130,246,0.45);
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
 }
 .global-bgm-btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transform: translateY(4px);
+    box-shadow: 0 0px 0 #1d4ed8, 0 4px 8px rgba(59,130,246,0.35);
 }
 .global-bgm-btn.muted {
-    background: #f1f5f9;
-    color: #94a3b8;
+    background: linear-gradient(135deg, #94a3b8, #64748b);
     border-color: #e2e8f0;
+    box-shadow: 0 4px 0 #475569, 0 8px 20px rgba(100,116,139,0.35);
+}
+
+/* --- KART GEÇİŞ ANİMASYONLARI --- */
+@keyframes card-enter-right {
+    0%   { opacity: 0; transform: translateX(60px) scale(0.93); }
+    100% { opacity: 1; transform: translateX(0)   scale(1); }
+}
+@keyframes card-enter-left {
+    0%   { opacity: 0; transform: translateX(-60px) scale(0.93); }
+    100% { opacity: 1; transform: translateX(0)    scale(1); }
+}
+@keyframes card-exit-right {
+    0%   { opacity: 1; transform: translateX(0)    scale(1); }
+    100% { opacity: 0; transform: translateX(80px) scale(0.93); }
+}
+@keyframes card-exit-left {
+    0%   { opacity: 1; transform: translateX(0)     scale(1); }
+    100% { opacity: 0; transform: translateX(-80px) scale(0.93); }
+}
+
+.card-anim-enter-right {
+    animation: card-enter-right 0.38s cubic-bezier(0.22,1,0.36,1) both;
+}
+.card-anim-enter-left {
+    animation: card-enter-left 0.38s cubic-bezier(0.22,1,0.36,1) both;
+}
+.card-anim-exit-right {
+    animation: card-exit-right 0.28s ease-in both;
+    pointer-events: none;
+}
+.card-anim-exit-left {
+    animation: card-exit-left 0.28s ease-in both;
+    pointer-events: none;
+}
+
+/* Sayfa geçiş overlay efekti */
+@keyframes page-flash {
+    0%   { opacity: 0; }
+    18%  { opacity: 1; }
+    82%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+.page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.98) 100%);
+    pointer-events: none;
+    animation: page-flash 0.5s ease both;
 }
 
 /* --- OYUN EKRANI STİLLERİ --- */
@@ -909,17 +959,25 @@ body.carousel-page {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 20px;
+    gap: 4px;
     margin-top: 30px;
 }
 
 /* 3D Dönüşüm Çerçevesi */
 .memory-card {
-    width: 150px;
-    height: 150px;
+    width: 135px;
+    height: 135px;
     perspective: 1000px;
     /* 3D derinlik hissi */
     cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+/* Kart döndüğünde diğer kartların üstünde görünmesi için z-index artırılır */
+.memory-card.flipped,
+.memory-card:active {
+    z-index: 10;
 }
 
 /* Kartın İç Kısmı (Dönen Yapı) */
@@ -950,13 +1008,14 @@ body.carousel-page {
     display: flex;
     justify-content: center;
     align-items: center;
+    box-sizing: border-box;
 }
 
 /* KARTIN ARKA YÜZÜ (Başlangıçta Görünen Soru İşaretli Kısım) */
 .memory-card-back {
     background: linear-gradient(135deg, #60a5fa, #3b82f6);
     color: white;
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: bold;
     border: 4px solid #eff6ff;
 }

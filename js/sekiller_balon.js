@@ -1,4 +1,4 @@
-// 8 Temel Şeklin Vektörel (SVG) Kodları Veritabanı
+﻿// 8 Temel Şeklin Vektörel (SVG) Kodları Veritabanı
 const shapesDatabase = [
     { id: 'kare', label: 'Kare', color: '#e74c3c', svg: '<svg viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" fill="currentColor"/></svg>' },
     { id: 'daire', label: 'Daire', color: '#3498db', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="currentColor"/></svg>' },
@@ -16,11 +16,12 @@ const audioPop = new Audio('assets/sounds/pat.mp3');
 const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentLevelNumber = 1; 
 let currentTargetShape = null;
 let currentScore = 0;
-const targetScore = 3; // Seviye atlamak için gereken balon sayısı
+const targetScore = 5; // Seviye atlamak için gereken balon sayısı
 let balloonInterval = null; // Balon üretim sayacı
 let activeShapes = []; // O seviyede uçacak şekiller havuzu
 let spawnRate = 2000; // Balon çıkma hızı (Lvl 1 için yavaş)
@@ -45,15 +46,13 @@ function startLevel(levelNumber) {
 
     const skyArea = document.getElementById('sky-area');
     skyArea.innerHTML = ''; // Gökyüzünü temizle
-    
-    document.getElementById('level-title').innerText = `Seviye ${levelNumber}`;
 
     // Zorluk Ayarı: Seviye arttıkça ekran daha kalabalık ve hızlı olur
     let numWrongShapes = levelNumber; // Lvl 1'de 1 yanlış şekil, Lvl 5'te 5 yanlış şekil
     if(numWrongShapes > 7) numWrongShapes = 7;
     
-    spawnRate = 2000 - (levelNumber * 200); // Seviye arttıkça daha sık balon çıkar
-    flySpeed = 7 - levelNumber; // Seviye arttıkça saniyeler düşer, balon hızlanır
+    spawnRate = 2500 - (levelNumber * 200); // 1. seviyede 2.3sn, eskisi kadar sık değil
+    flySpeed = 9 - (levelNumber * 0.8); // 5. seviyede 5 saniye (hız mantıklı sınırda)
 
     // Hedef şekli rastgele seç
     let shuffledDB = shuffleArray(shapesDatabase);
@@ -95,8 +94,12 @@ function createBalloon() {
     const randomLeft = Math.floor(Math.random() * 85);
     balloon.style.left = `${randomLeft}%`;
     
-    // Seviyeye göre uçuş hızını ayarla
-    balloon.style.animation = `floatUp ${flySpeed}s linear forwards`;
+    // Zor seviyelerde Zig Zag hareketi ekle
+    if (currentLevelNumber >= 3) {
+        balloon.style.animation = `floatUp ${flySpeed}s linear forwards, zigZag ${2 + Math.random()}s ease-in-out infinite alternate`;
+    } else {
+        balloon.style.animation = `floatUp ${flySpeed}s linear forwards`;
+    }
 
     // Balona tıklama olayını ekle
     balloon.addEventListener('click', () => handleBalloonClick(balloon));
@@ -117,6 +120,20 @@ function handleBalloonClick(balloonElement) {
         // --- DOĞRU BALON PATLATILDI ---
         audioPop.currentTime = 0;
         audioPop.play();
+        
+        // Ekranda patladığı konumu al ve o renkte parçacıklar fırlat
+        const rect = balloonElement.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        
+        confetti({
+            particleCount: 25,
+            spread: 50,
+            origin: { x, y },
+            colors: [currentTargetShape.color],
+            ticks: 50,
+            zIndex: 100
+        });
         
         balloonElement.classList.add('popped'); // CSS ile büyüyüp kaybolma efekti
         currentScore++;
@@ -166,10 +183,9 @@ function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
     overlay.classList.remove('hidden');
-    content.innerHTML = '🤩👏'; 
+    content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
     audioLevelComplete.play();
-    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
 
     audioLevelComplete.onended = () => {
         overlay.classList.add('hidden');
@@ -181,33 +197,36 @@ function showGrandFinaleCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
     overlay.classList.remove('hidden');
-    content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-    content.className = 'celebration-content'; 
-    audioGrandFinale.play(); 
-    triggerGrandConfetti(); 
-
-    setTimeout(() => {
-        content.innerHTML += `
-            <div class="end-game-buttons">
-                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                <button class="back-to-menu-btn" onclick="window.location.href='sekiller_menu.html'">⬅ Menüye Dön</button>
-            </div>
-        `;
-    }, 6000); 
+    showFinaleVideo(overlay, content, 'sekiller_menu.html');
 }
 
-function triggerGrandConfetti() {
-    const duration = 5 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return clearInterval(interval);
-        const particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 window.onload = () => {

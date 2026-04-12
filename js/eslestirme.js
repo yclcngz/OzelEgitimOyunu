@@ -1,4 +1,4 @@
-const fruitNames = [
+﻿const fruitNames = [
     "muz", "elma", "portakal", "cilek", "kiraz", "nar", "kivi",
     "armut", "ananas", "mandalina", "karpuz", "kayisi", "seftali",
     "kavun", "uzum", "avokado", "incir"
@@ -15,6 +15,7 @@ const audioOnay = new Audio('assets/sounds/onay.mp3');
 const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentLevelNumber = 1; 
 let currentStages = [];     
@@ -208,46 +209,50 @@ document.getElementById('play-audio-btn').addEventListener('click', playInstruct
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
-    
+
     overlay.classList.remove('hidden');
 
     if (currentLevelNumber < 4) {
-        // --- NORMAL SEVİYE SONU (1, 2, 3) ---
-        content.innerHTML = '🤩👏'; 
-        content.className = 'celebration-content'; // Eski class'ı koru
+        content.innerHTML = '🤩👏';
+        content.className = 'celebration-content';
         audioLevelComplete.play();
-        triggerConfetti();
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
-   // ... (Fonksiyonun üst kısmı aynı kalıyor) ...
     } else {
-        // --- BÜYÜK FİNAL (SEVİYE 4 SONU) ---
-        
-        // --- DEĞİŞİKLİK BURADA: Emojiyi silip GIF ekliyoruz ---
-        // content.innerHTML = '🏆'; // Eski kupa emojisi satırını sildik veya yorum satırı yaptık.
-        
-        // Yerine senin GIF dosyanı içeren <img> etiketini koyuyoruz.
-        content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-        
-        // Class ismini de CSS'te yazdığımız yeni isme göre güncelliyoruz.
-        content.className = 'celebration-content'; // Ana kapsayıcı class'ı
-        
-        // ... (Müzik ve Konfeti kısımları aynen kalıyor) ...
-        audioGrandFinale.play(); // Coşkulu zafer müziğini çal
-        triggerGrandConfetti(); // 5 saniyelik sürekli havai fişek konfetisi başlat
-
-        setTimeout(() => {
-            content.innerHTML += `
-                <div class="end-game-buttons">
-                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
-                </div>
-            `;
-        }, 6000); 
+        showFinaleVideo(overlay, content, 'meyveler_menu.html');
     }
+}
+
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 function triggerConfetti() {
@@ -255,29 +260,5 @@ function triggerConfetti() {
 }
 
 window.onload = () => {
-    startLevel(1); 
+    startLevel(1);
 };
-
-// Büyük Final İçin Havai Fişek Etkili Sürekli Konfeti
-function triggerGrandConfetti() {
-    const duration = 5 * 1000; // 5 saniye boyunca sürecek
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-
-    function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-            return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        // Ekranın iki farklı köşesinden sürekli patlat
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
-}

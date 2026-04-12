@@ -42,6 +42,7 @@ const audioOnay = new Audio('assets/sounds/onay.mp3');
 const audioDat  = new Audio('assets/sounds/dat.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale   = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentStageIdx = 0;
 let currentAudio = null;
@@ -114,7 +115,7 @@ function renderListenStage(stage) {
         const card = document.createElement('div');
         card.classList.add('animal-sound-card');
         card.innerHTML = `
-            <img src="assets/images/hayvanlar/${animal.id}.png" alt="${animal.name}">
+            <img src="assets/images/hayvanlar/${animal.id}.webp" alt="${animal.name}">
             <div class="animal-name">${animal.name}</div>
             <div class="sound-icon">🔊</div>
         `;
@@ -157,7 +158,7 @@ function renderQuizStage(stage) {
         const card = document.createElement('div');
         card.classList.add('choice-card');
         card.innerHTML = `
-            <img src="assets/images/hayvanlar/${animal.id}.png" alt="${animal.name}">
+            <img src="assets/images/hayvanlar/${animal.id}.webp" alt="${animal.name}">
             <div class="choice-name">${animal.name}</div>
             <div class="cross-mark">❌</div>
         `;
@@ -229,35 +230,36 @@ function showCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
     overlay.classList.remove('hidden');
-    content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-    audioGrandFinale.play();
-    triggerGrandConfetti();
-    setTimeout(() => {
-        content.innerHTML += `
+    showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
+}
+
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
             <div class="end-game-buttons">
                 <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                <button class="back-to-menu-btn" onclick="window.location.href='hayvanlar_menu.html'">⬅ Menüye Dön</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
             </div>
         `;
-    }, 6000);
-}
-
-function triggerConfetti() {
-    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
-}
-
-function triggerGrandConfetti() {
-    const duration = 5000;
-    const end = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-    function rnd(min, max) { return Math.random() * (max - min) + min; }
-    const interval = setInterval(() => {
-        const left = end - Date.now();
-        if (left <= 0) return clearInterval(interval);
-        const count = 50 * (left / duration);
-        confetti(Object.assign({}, defaults, { particleCount: count, origin: { x: rnd(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount: count, origin: { x: rnd(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 // --- BAŞLAT ---

@@ -1,3 +1,5 @@
+﻿window.MAX_LEVEL = 3;
+
 // 7 Mutfak Nesnesi Veritabanı
 const kitchenItems = [
     { id: 'tabak', image: 'assets/images/mutfak/tabak.png', audio: 'assets/sounds/isim_tabak.mp3' },
@@ -14,47 +16,62 @@ const audioSarki = new Audio('assets/sounds/resime_tikla_sarki.mp3');
 const audioKomut = new Audio('assets/sounds/resime_tikla_komut.mp3');
 
 // --- SEVİYE 2 SESLERİ ---
-const audioLvl2Sarki = new Audio('assets/sounds/ayni_resimleri_eslestir.mp3'); // YENİ ŞARKI
-const audioNesneleriEslestir = new Audio('assets/sounds/nesneleri_eslestir.mp3'); 
+const audioLvl2Sarki = new Audio('assets/sounds/ayni_resimleri_eslestir.mp3');
+const audioNesneleriEslestir = new Audio('assets/sounds/nesneleri_eslestir.mp3');
+
+// --- SEVİYE 3 SESLERİ ---
+const audioLvl3Komut = new Audio('assets/sounds/ayni_nesneleri_bulalım_komut.mp3');
 
 // --- ORTAK SESLER ---
-const audioOnay = new Audio('assets/sounds/onay.mp3'); 
-const audioDat = new Audio('assets/sounds/dat.mp3'); 
-const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
-const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
+const audioOnay = new Audio('assets/sounds/onay.mp3');
+const audioDat = new Audio('assets/sounds/dat.mp3');
+const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
+const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentLevel = 1;
 
 // --- YARDIMCI FONKSİYONLAR ---
 function shuffleArray(array) {
-    let shuffled = [...array]; 
+    let shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; 
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+}
+
+function calcLayout(n) {
+    const cols = 2;
+    const gap = 20;
+    const availW = Math.min(window.innerWidth - 64, 900);
+    const rows = Math.ceil(n / cols);
+    const availH = window.innerHeight - 200;
+    const itemByW = (availW - gap * (cols - 1)) / cols;
+    const itemByH = (availH - gap * (rows - 1)) / rows;
+    const size = Math.floor(Math.min(itemByW, itemByH, 240));
+    return { size, cols, gap };
 }
 
 function hideAllBoards() {
     document.getElementById('level1-board').classList.add('hidden');
     document.getElementById('level2-board').classList.add('hidden');
     document.getElementById('level3-board').classList.add('hidden');
-    document.getElementById('play-audio-btn').classList.add('hidden');
 }
 
-// Seviye değiştiğinde önceki tüm sesleri susturmak için
 function stopAllAudio() {
     audioSarki.pause(); audioSarki.currentTime = 0;
     audioKomut.pause(); audioKomut.currentTime = 0;
-    audioLvl2Sarki.pause(); audioLvl2Sarki.currentTime = 0; // Seviye 2 şarkısını sustur
+    audioLvl2Sarki.pause(); audioLvl2Sarki.currentTime = 0;
     audioNesneleriEslestir.pause(); audioNesneleriEslestir.currentTime = 0;
+    audioLvl3Komut.pause(); audioLvl3Komut.currentTime = 0;
 }
 
 // --- ANA OYUN YÖNETİCİSİ ---
 function startLevel(level) {
     currentLevel = level;
     hideAllBoards();
-    stopAllAudio(); 
+    stopAllAudio();
 
     if (level === 1) renderLevel1();
     else if (level === 2) renderLevel2();
@@ -62,23 +79,55 @@ function startLevel(level) {
 }
 
 // ==========================================
-// SEVİYE 1: TIKLA VE DİNLE 
+// SEVİYE 1: TIKLA VE DİNLE (Sub-stage sistemi)
 // ==========================================
 let listenedItemsCount = 0;
-let isLevel1Playable = false; 
+let isLevel1Playable = false;
+let level1SubStages = [];
+let level1CurrentSubStage = 0;
 
 function renderLevel1() {
     const board = document.getElementById('level1-board');
-    const title = document.getElementById('level-title');
     board.innerHTML = '';
     board.classList.remove('hidden');
-    title.innerText = "Seviye 1: Tıkla ve Dinle";
+
     listenedItemsCount = 0;
-    isLevel1Playable = false; 
+    isLevel1Playable = false;
 
-    let shuffledItems = shuffleArray(kitchenItems);
+    const shuffledItems = shuffleArray(kitchenItems);
+    // 7 nesneyi 2 sub-stage'e böl: [4] + [3]
+    level1SubStages = [shuffledItems.slice(0, 4), shuffledItems.slice(4)];
+    level1CurrentSubStage = 0;
 
-    shuffledItems.forEach(item => {
+    renderLevel1SubStage();
+
+    audioKomut.play().catch(() => console.log("Ses engellendi."));
+    audioKomut.onended = () => { isLevel1Playable = true; };
+
+    document.getElementById('play-audio-btn').onclick = () => {
+        audioKomut.currentTime = 0;
+        audioKomut.play();
+    };
+}
+
+function renderLevel1SubStage() {
+    const board = document.getElementById('level1-board');
+    board.innerHTML = '';
+    listenedItemsCount = 0;
+
+    if (level1CurrentSubStage > 0) {
+        isLevel1Playable = true;
+    }
+
+    const items = level1SubStages[level1CurrentSubStage];
+    const { size, cols, gap } = calcLayout(items.length);
+
+    board.style.display = 'grid';
+    board.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+    board.style.gap = gap + 'px';
+    board.style.justifyContent = 'center';
+
+    items.forEach(item => {
         const wrapper = document.createElement('div');
         wrapper.classList.add('fruit-wrapper');
 
@@ -86,9 +135,13 @@ function renderLevel1() {
         imgElement.src = item.image;
         imgElement.decoding = 'async';
         imgElement.classList.add('fruit-item');
-        
+        imgElement.style.width = size + 'px';
+        imgElement.style.height = size + 'px';
+        imgElement.style.padding = '10px';
+        imgElement.style.boxSizing = 'border-box';
+
         imgElement.addEventListener('click', () => {
-            if (!isLevel1Playable) return; 
+            if (!isLevel1Playable) return;
 
             const itemAudio = new Audio(item.audio);
             itemAudio.play();
@@ -97,12 +150,19 @@ function renderLevel1() {
                 imgElement.classList.add('listened-item');
                 listenedItemsCount++;
 
-                if (listenedItemsCount === kitchenItems.length) {
-                    setTimeout(() => showLevelCompleteCelebration(), 1500);
+                if (listenedItemsCount === items.length) {
+                    setTimeout(() => {
+                        level1CurrentSubStage++;
+                        if (level1CurrentSubStage < level1SubStages.length) {
+                            renderLevel1SubStage();
+                        } else {
+                            showLevelCompleteCelebration();
+                        }
+                    }, 1500);
                 }
             } else {
                 imgElement.classList.remove('listened-item');
-                void imgElement.offsetWidth; 
+                void imgElement.offsetWidth;
                 imgElement.classList.add('listened-item');
             }
         });
@@ -110,37 +170,42 @@ function renderLevel1() {
         wrapper.appendChild(imgElement);
         board.appendChild(wrapper);
     });
-
-    audioKomut.play().catch(e => console.log("Otomatik ses engellendi."));
-    audioKomut.onended = () => { isLevel1Playable = true; };
 }
 
 // ==========================================
-// SEVİYE 2: İKİ AŞAMALI EŞLEŞTİRME 
+// SEVİYE 2: İKİ AŞAMALI EŞLEŞTİRME
 // ==========================================
 let selectedLeft = null;
 let selectedRight = null;
 let matchedPairsLvl2 = 0;
 let isProcessing = false;
-let isLevel2Playable = false; // YENİ: SEVİYE 2 KİLİT SİSTEMİ
+let isLevel2Playable = false;
 
 let currentStageLvl2 = 1;
 let lvl2ItemsStage1 = [];
 let lvl2ItemsStage2 = [];
 let totalPairsCurrentStage = 0;
+let currentLevel2ImgSize = 160;
+
+function calcLevel2ImgSize(n) {
+    const gap = 12;
+    const availH = window.innerHeight - 160;
+    const imgH = Math.floor((availH - gap * (n - 1)) / n);
+    const availW = (window.innerWidth - 48) / 2 - gap * 2;
+    return Math.min(imgH, Math.floor(availW), 200);
+}
 
 function renderLevel2() {
     const board = document.getElementById('level2-board');
     const audioBtn = document.getElementById('play-audio-btn');
-    
+
     board.classList.remove('hidden');
-    audioBtn.classList.remove('hidden');
-    
-    let shuffledAll = shuffleArray(kitchenItems);
-    lvl2ItemsStage1 = shuffledAll.slice(0, 4); 
-    lvl2ItemsStage2 = shuffledAll.slice(4, 7); 
-    
-    currentStageLvl2 = 1; 
+
+    const shuffledAll = shuffleArray(kitchenItems);
+    lvl2ItemsStage1 = shuffledAll.slice(0, 3);
+    lvl2ItemsStage2 = shuffledAll.slice(3);
+
+    currentStageLvl2 = 1;
     renderLevel2Stage(currentStageLvl2);
 
     audioBtn.onclick = () => { audioNesneleriEslestir.currentTime = 0; audioNesneleriEslestir.play(); };
@@ -149,43 +214,30 @@ function renderLevel2() {
 function renderLevel2Stage(stage) {
     const leftCol = document.getElementById('left-column');
     const rightCol = document.getElementById('right-column');
-    const title = document.getElementById('level-title');
-    
-    title.innerText = `Seviye 2: Eşleştirme (Aşama ${stage}/2)`;
+
     leftCol.innerHTML = '';
     rightCol.innerHTML = '';
     matchedPairsLvl2 = 0;
     selectedLeft = null;
     selectedRight = null;
     isProcessing = false;
-    isLevel2Playable = false; // ŞARKI BİTENE KADAR EKRANI KİLİTLE
+    isLevel2Playable = false;
 
-    let currentItems = stage === 1 ? lvl2ItemsStage1 : lvl2ItemsStage2;
-    totalPairsCurrentStage = currentItems.length; 
+    const currentItems = stage === 1 ? lvl2ItemsStage1 : lvl2ItemsStage2;
+    totalPairsCurrentStage = currentItems.length;
+    currentLevel2ImgSize = calcLevel2ImgSize(currentItems.length);
 
     const leftItems = shuffleArray(currentItems);
     const rightItems = shuffleArray(currentItems);
 
-    leftItems.forEach(item => createMatchItem(item, 'left', leftCol));
-    rightItems.forEach(item => createMatchItem(item, 'right', rightCol));
+    leftItems.forEach(item => createMatchItem(item, 'left', leftCol, currentLevel2ImgSize));
+    rightItems.forEach(item => createMatchItem(item, 'right', rightCol, currentLevel2ImgSize));
 
-    // --- YENİ SES VE KİLİT SIRALAMASI ---
-    if (stage === 1) {
-        // 1. Aşama: Komut -> Kilit Açılır
-        audioNesneleriEslestir.play().catch(e => console.log("Ses engellendi"));
-        audioNesneleriEslestir.onended = () => {
-            isLevel2Playable = true;
-        };
-    } else {
-        // 2. Aşama: Şarkı yok, sadece Komut -> Kilit Açılır (Çocuğu sıkmamak için)
-        audioNesneleriEslestir.play();
-        audioNesneleriEslestir.onended = () => {
-            isLevel2Playable = true;
-        };
-    }
+    audioNesneleriEslestir.play().catch(() => console.log("Ses engellendi"));
+    audioNesneleriEslestir.onended = () => { isLevel2Playable = true; };
 }
 
-function createMatchItem(item, side, parent) {
+function createMatchItem(item, side, parent, imgSize) {
     const wrapper = document.createElement('div');
     wrapper.classList.add('fruit-wrapper');
     const img = document.createElement('img');
@@ -194,10 +246,9 @@ function createMatchItem(item, side, parent) {
     img.classList.add('fruit-item');
     img.dataset.id = item.id;
     img.dataset.side = side;
-    
-    // 200px kocaman ve tıklaması kolay boyut!
-    img.style.width = '200px'; 
-    img.style.height = '200px'; 
+
+    img.style.width = imgSize + 'px';
+    img.style.height = imgSize + 'px';
     img.style.objectFit = 'contain';
 
     const cross = document.createElement('div');
@@ -212,7 +263,6 @@ function createMatchItem(item, side, parent) {
 }
 
 function handleMatchClick(img, wrap) {
-    // YENİ: Kilitliyse tıklamaları engelle
     if (!isLevel2Playable || img.classList.contains('matched-fruit') || isProcessing) return;
 
     if (img.dataset.side === 'left') {
@@ -236,13 +286,9 @@ function checkMatchLvl2() {
         audioOnay.cloneNode().play();
         curL.img.className = 'fruit-item matched-fruit';
         curR.img.className = 'fruit-item matched-fruit';
-        
-        // Eşleşince boyut bozulmasın diye 200px korundu
-        curL.img.style.width = '200px'; curR.img.style.width = '200px';
-        curL.img.style.height = '200px'; curR.img.style.height = '200px';
-        
+
         matchedPairsLvl2++;
-        
+
         if (matchedPairsLvl2 === totalPairsCurrentStage) {
             setTimeout(() => {
                 if (currentStageLvl2 === 1) {
@@ -276,34 +322,73 @@ function checkMatchLvl2() {
 // ==========================================
 let hasFlippedCard = false, lockBoard = false;
 let firstCard, secondCard, matchedPairsLvl3 = 0;
+let level3SubStages = [], level3CurrentSubStage = 0;
+
+function calcLevel3CardSize() {
+    const gap = 12;
+    const cols = 2, rows = 3;
+    const availW = window.innerWidth - 48;
+    const availH = window.innerHeight - 160;
+    const cardByW = Math.floor((availW - gap) / cols);
+    const cardByH = Math.floor((availH - gap * 2) / rows);
+    return { size: Math.min(cardByW, cardByH, 200), cols, gap };
+}
 
 function renderLevel3() {
     const board = document.getElementById('level3-board');
-    const title = document.getElementById('level-title');
     board.classList.remove('hidden');
+
+    // Komut sesini çal
+    audioLvl3Komut.currentTime = 0;
+    audioLvl3Komut.play().catch(() => console.log('Ses engellendi.'));
+
+    // Play butonuna bas → komutu tekrar çal
+    document.getElementById('play-audio-btn').onclick = () => {
+        audioLvl3Komut.currentTime = 0;
+        audioLvl3Komut.play();
+    };
+
+    // 7 eşyayı 3'lü gruplara böl: [3, 3, 3] — son grup 1 yeni + 2 dolgu
+    const shuffled = shuffleArray(kitchenItems);
+    level3SubStages = [
+        shuffled.slice(0, 3),
+        shuffled.slice(3, 6),
+        [shuffled[6], shuffled[0], shuffled[1]]
+    ];
+    level3CurrentSubStage = 0;
+
+    renderLevel3SubStage();
+}
+
+function renderLevel3SubStage() {
+    const board = document.getElementById('level3-board');
     board.innerHTML = '';
-    title.innerText = "Seviye 3: Hafıza Bulmacası";
-    
+
     hasFlippedCard = false; lockBoard = false;
     firstCard = null; secondCard = null; matchedPairsLvl3 = 0;
 
-    let cardsArray = [];
-    kitchenItems.forEach(item => {
-        cardsArray.push(item);
-        cardsArray.push(item);
-    });
-    
-    let shuffledCards = shuffleArray(cardsArray);
+    const subItems = level3SubStages[level3CurrentSubStage];
+    const { size, cols, gap } = calcLevel3CardSize();
 
-    shuffledCards.forEach(item => {
+    board.style.display = 'grid';
+    board.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+    board.style.gap = gap + 'px';
+    board.style.justifyContent = 'center';
+
+    let cardsArray = [];
+    subItems.forEach(item => { cardsArray.push(item); cardsArray.push(item); });
+
+    shuffleArray(cardsArray).forEach(item => {
         const card = document.createElement('div');
         card.classList.add('memory-card');
         card.dataset.id = item.id;
-        card.style.width = '110px'; card.style.height = '110px';
+        card.style.width = size + 'px';
+        card.style.height = size + 'px';
 
+        const imgS = Math.floor(size * 0.65);
         card.innerHTML = `
             <div class="memory-card-inner">
-                <div class="memory-card-front"><img src="${item.image}"></div>
+                <div class="memory-card-front"><img src="${item.image}" style="width:${imgS}px;height:${imgS}px;object-fit:contain;"></div>
                 <div class="memory-card-back">?</div>
             </div>
         `;
@@ -320,7 +405,7 @@ function flipCard() {
         hasFlippedCard = true; firstCard = this; return;
     }
     secondCard = this;
-    
+
     if (firstCard.dataset.id === secondCard.dataset.id) {
         firstCard.removeEventListener('click', flipCard);
         secondCard.removeEventListener('click', flipCard);
@@ -328,8 +413,16 @@ function flipCard() {
         matchedPairsLvl3++;
         resetBoard();
 
-        if (matchedPairsLvl3 === kitchenItems.length) {
-            setTimeout(() => showLevelCompleteCelebration(), 1000);
+        const totalPairs = level3SubStages[level3CurrentSubStage].length;
+        if (matchedPairsLvl3 === totalPairs) {
+            setTimeout(() => {
+                level3CurrentSubStage++;
+                if (level3CurrentSubStage < level3SubStages.length) {
+                    renderLevel3SubStage();
+                } else {
+                    showLevelCompleteCelebration();
+                }
+            }, 1000);
         }
     } else {
         lockBoard = true;
@@ -356,42 +449,46 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
 
     if (currentLevel < 3) {
-        content.innerHTML = '🤩👏'; 
+        content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
         audioLevelComplete.play();
-        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');
-            startLevel(currentLevel + 1); 
+            startLevel(currentLevel + 1);
         };
     } else {
-        content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-        content.className = 'celebration-content'; 
-        audioGrandFinale.play(); 
-        triggerGrandConfetti(); 
-
-        setTimeout(() => {
-            content.innerHTML += `
-                <div class="end-game-buttons">
-                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                    <button class="back-to-menu-btn" onclick="window.location.href='nesneler_menu.html'">⬅ Menüye Dön</button>
-                </div>
-            `;
-        }, 6000); 
+        showFinaleVideo(overlay, content, 'nesneler_menu.html');
     }
 }
 
-function triggerGrandConfetti() {
-    const duration = 5 * 1000;
-    const end = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-    function r(min, max) { return Math.random() * (max - min) + min; }
-    const interval = setInterval(() => {
-        if (Date.now() > end) return clearInterval(interval);
-        confetti(Object.assign({}, defaults, { particleCount: 50, origin: { x: r(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount: 50, origin: { x: r(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 window.onload = () => startLevel(1);

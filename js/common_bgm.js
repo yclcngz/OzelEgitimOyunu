@@ -1,26 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Müzik kontrol UI'ı
+    // --- Müzik Kontrol Butonu ---
     const bgmBtn = document.createElement('button');
+    bgmBtn.id = 'global-bgm-btn';
     bgmBtn.className = 'global-bgm-btn';
-    bgmBtn.innerHTML = '🎵 Müzik: Açık';
+    bgmBtn.innerHTML = '🎵 Müzik';
     document.body.appendChild(bgmBtn);
 
     const bgmAudio = new Audio('assets/sounds/ortak_oyun_ses.mp3');
     bgmAudio.loop = true;
-    bgmAudio.volume = 0.06; // Fısıltı gibi çok daha derinden gelsin
+    bgmAudio.volume = 0.06;
     
     let isMuted = false;
 
+    // --- Splash ekranı varken butonu gizle ---
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen && !splashScreen.classList.contains('hidden')) {
+        bgmBtn.style.display = 'none';
+
+        // Splash kapanınca butonu göster
+        const splashObserver = new MutationObserver(() => {
+            if (splashScreen.classList.contains('hidden')) {
+                bgmBtn.style.display = '';
+                splashObserver.disconnect();
+            }
+        });
+        splashObserver.observe(splashScreen, { attributes: true, attributeFilter: ['class'] });
+    }
+
     // --- SES KISMA SİSTEMİ (Audio Ducking) ---
-    // Oyundaki herhangi bir komut/dat/onay sesi çaldığında BGM sesini daha da kıs, bitince geri aç.
     const originalAudioPlay = window.Audio.prototype.play;
     window.Audio.prototype.play = function(...args) {
         if (this !== bgmAudio && !isMuted) {
-            bgmAudio.volume = 0.01; // Ekranda başka ses varken %1 seviyesine bastır
+            bgmAudio.volume = 0.01;
             const restoreVolume = () => {
-                if (!isMuted) {
-                    bgmAudio.volume = 0.06; // Çalan ses bitince fısıltıya geri dön
-                }
+                if (!isMuted) bgmAudio.volume = 0.06;
                 this.removeEventListener('ended', restoreVolume);
                 this.removeEventListener('pause', restoreVolume);
             };
@@ -30,33 +43,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return originalAudioPlay.apply(this, args);
     };
 
-    // Tarayıcıların "otomatik çalma" kısıtlamasını aşmak için
-    // Ekrana ilk dokunuşta/tıklayışta müziği başlat
+    // İlk dokunuşta müziği başlat (tarayıcı autoplay kısıtlaması)
     const attemptPlay = () => {
-        if(!isMuted) {
-            bgmAudio.play().catch(e => {
-                console.log("Tarayıcı autoplay engelledi:", e);
-            });
+        if (!isMuted) {
+            bgmAudio.play().catch(e => console.log("Autoplay engellendi:", e));
         }
         document.removeEventListener('click', attemptPlay);
         document.removeEventListener('touchstart', attemptPlay);
     };
-
     document.addEventListener('click', attemptPlay);
     document.addEventListener('touchstart', attemptPlay);
 
-    // Müzik Kapat / Aç Butonu
+    // Müzik Kapat / Aç
     bgmBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Sayfadaki diğer tıklamaları tetiklemesin
+        e.stopPropagation();
         if (isMuted) {
-            // Aç
             bgmAudio.volume = 0.06;
-            bgmBtn.innerHTML = '🎵 Müzik: Açık';
+            bgmBtn.innerHTML = '🎵 Müzik';
             bgmBtn.classList.remove('muted');
             bgmAudio.play().catch(() => {});
             isMuted = false;
         } else {
-            // Kapat
             bgmAudio.pause();
             bgmBtn.innerHTML = '🔇 Kapalı';
             bgmBtn.classList.add('muted');
@@ -64,23 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- GELİŞTİRİCİ MENÜSÜ (DEV MENU) ---
-    // Eğer bulunduğumuz sayfada 'startLevel' isimli bir oyun başlatma fonksiyonu varsa,
-    // Ekrana seviye atlatan gizli/geliştirici test butonlarını ekle.
+    // --- GELİŞTİRİCİ MENÜSÜ ---
     setTimeout(() => {
         if (typeof window.startLevel === 'function') {
             const devMenu = document.createElement('div');
             devMenu.className = 'dev-menu';
-            devMenu.style.display = 'flex'; // CSS'teki gizliliği aç
-            devMenu.innerHTML = `
-                <span>Hızlı Geçiş:</span>
-                <button onclick="window.startLevel(1)">1</button>
-                <button onclick="window.startLevel(2)">2</button>
-                <button onclick="window.startLevel(3)">3</button>
-                <button onclick="window.startLevel(4)">4</button>
-                <button onclick="window.startLevel(5)">5</button>
-            `;
+            devMenu.style.display = 'flex';
+            let maxOptions = window.MAX_LEVEL || 5;
+            let buttonsHtml = '';
+            for (let i = 1; i <= maxOptions; i++) {
+                buttonsHtml += `<button onclick="window.startLevel(${i})">${i}</button>`;
+            }
+            devMenu.innerHTML = `<span>Hızlı Geçiş:</span> ${buttonsHtml}`;
             document.body.appendChild(devMenu);
         }
-    }, 500); // Oyun kodlarının yüklenip window objesine yerleşmesini azıcık bekle
+    }, 500);
 });

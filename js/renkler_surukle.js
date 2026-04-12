@@ -1,4 +1,4 @@
-// İstediğimiz 8 Rengin Veritabanı (Resim yok, sadece renk kodları var)
+﻿// İstediğimiz 8 Rengin Veritabanı (Resim yok, sadece renk kodları var)
 const colorsDatabase = [
     { id: 'kirmizi', hex: '#e74c3c', label: 'Kırmızı' },
     { id: 'sari', hex: '#f1c40f', label: 'Sarı' },
@@ -15,11 +15,15 @@ const audioInstruction = new Audio('assets/sounds/surukle_ses.mp3');
 const audioOnay = new Audio('assets/sounds/onay.mp3'); 
 const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
-const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
+const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+
+window.MAX_LEVEL = 3;
 
 let currentLevelNumber = 1; 
 let itemsToDrag = 0; // O aşamada atılması gereken toplam kart sayısı
 let itemsSuccessfullyDropped = 0; // Doğru atılan kart sayısı
+let globalColorPool = [];
 
 // Diziyi karıştıran fonksiyon
 function shuffleArray(array) {
@@ -33,6 +37,9 @@ function shuffleArray(array) {
 
 function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
+    if (levelNumber === 1) {
+        globalColorPool = shuffleArray(colorsDatabase);
+    }
     renderStage(levelNumber);
 }
 
@@ -40,21 +47,26 @@ function startLevel(levelNumber) {
 function renderStage(level) {
     const basketsContainer = document.getElementById('baskets-container');
     const draggablesContainer = document.getElementById('draggables-container');
-    const levelTitle = document.getElementById('level-title');
     
     // Eski seviyenin öğelerini temizle
     basketsContainer.innerHTML = ''; 
     draggablesContainer.innerHTML = '';
     itemsSuccessfullyDropped = 0;
 
-    levelTitle.innerText = `Seviye ${level}`;
-
-    // Zorluk Ayarı: Lvl 1: 2 renk, Lvl 2: 3 renk ... Lvl 5: 6 renk
-    let numColors = level + 1; 
-    if(numColors > 8) numColors = 8; 
-
-    // Havuzdan bu seviye için rastgele renkler seç
-    let selectedColors = shuffleArray(colorsDatabase).slice(0, numColors);
+    // Zorluk Ayarı ve Havuzdan Renk Çekme (3 Seviyede 8 rengi tamamlama)
+    let numColors = 0;
+    let selectedColors = [];
+    
+    if (level === 1) {
+        numColors = 2;
+        selectedColors = globalColorPool.slice(0, 2);
+    } else if (level === 2) {
+        numColors = 3;
+        selectedColors = globalColorPool.slice(2, 5);
+    } else { // level 3 ve üstü
+        numColors = 3;
+        selectedColors = globalColorPool.slice(5, 8);
+    }
     
     // Her sepet için 2'şer adet kart üret (Örn: 2 sepet varsa 4 kart olacak)
     itemsToDrag = numColors * 2; 
@@ -173,7 +185,7 @@ function addTouchSupport(dragItem) {
             itemsSuccessfullyDropped++;
             if (itemsSuccessfullyDropped === itemsToDrag) {
                 setTimeout(() => {
-                    if (currentLevelNumber < 5) showLevelCompleteCelebration();
+                    if (currentLevelNumber < 3) showLevelCompleteCelebration();
                     else showGrandFinaleCelebration();
                 }, 1000);
             }
@@ -235,7 +247,7 @@ function handleDrop(e) {
         // Tüm kartlar bitti mi kontrol et
         if (itemsSuccessfullyDropped === itemsToDrag) {
             setTimeout(() => {
-                if (currentLevelNumber < 5) {
+                if (currentLevelNumber < 3) {
                     showLevelCompleteCelebration();
                 } else {
                     showGrandFinaleCelebration();
@@ -266,13 +278,11 @@ function triggerConfettiMini() {
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
-    
+
     overlay.classList.remove('hidden');
-    content.innerHTML = '🤩👏'; 
+    content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
     audioLevelComplete.play();
-    
-    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
 
     audioLevelComplete.onended = () => {
         overlay.classList.add('hidden');
@@ -283,37 +293,37 @@ function showLevelCompleteCelebration() {
 function showGrandFinaleCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
-    
     overlay.classList.remove('hidden');
-    content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-    content.className = 'celebration-content'; 
-    
-    audioGrandFinale.play(); 
-    triggerGrandConfetti(); 
-
-    setTimeout(() => {
-        content.innerHTML += `
-            <div class="end-game-buttons">
-                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                <button class="back-to-menu-btn" onclick="window.location.href='renkler_menu.html'">⬅ Menüye Dön</button>
-            </div>
-        `;
-    }, 6000); 
+    showFinaleVideo(overlay, content, 'renkler_menu.html');
 }
 
-function triggerGrandConfetti() {
-    const duration = 5 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return clearInterval(interval);
-        const particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 // Sayfa yüklendiğinde Lvl 1'den başla

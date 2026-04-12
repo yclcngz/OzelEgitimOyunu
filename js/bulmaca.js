@@ -1,3 +1,5 @@
+﻿window.MAX_LEVEL = 3;
+
 const fruitNames = [
     "muz", "elma", "portakal", "cilek", "kiraz", "nar", "kivi",
     "armut", "ananas", "mandalina", "karpuz", "kayisi", "seftali",
@@ -14,7 +16,8 @@ const audioInstruction = new Audio('assets/sounds/bulmaca_ses.mp3');
 const audioOnay = new Audio('assets/sounds/onay.mp3'); 
 const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
-const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
+const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentLevelNumber = 1; 
 let currentStages = [];     
@@ -186,58 +189,56 @@ document.getElementById('play-audio-btn').addEventListener('click', playInstruct
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
-    
+
     overlay.classList.remove('hidden');
 
     if (currentLevelNumber < 3) {
-        // NORMAL SEVİYE SONU
-        content.innerHTML = '🤩👏'; 
+        content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
         audioLevelComplete.play();
-        triggerConfetti();
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
     } else {
-        // BÜYÜK FİNAL (SEVİYE 5 SONU - GIF'Lİ)
-        content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-        content.className = 'celebration-content'; 
-        
-        audioGrandFinale.play(); 
-        triggerGrandConfetti(); 
-
-        setTimeout(() => {
-            content.innerHTML += `
-                <div class="end-game-buttons">
-                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
-                </div>
-            `;
-        }, 6000); 
+        showFinaleVideo(overlay, content, 'meyveler_menu.html');
     }
+}
+
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 function triggerConfetti() {
     confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
 }
 
-function triggerGrandConfetti() {
-    const duration = 5 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return clearInterval(interval);
-        const particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
-}
-
 window.onload = () => {
-    startLevel(1); 
+    startLevel(1);
 };

@@ -1,3 +1,5 @@
+window.MAX_LEVEL = 5;
+
 // Türkçe karakter içermeyen standartlaştırılmış 17 Hayvan Listesi
 const animalNames = [
     "kedi", "kopek", "kus", "at", "inek", "koyun", "tavsan", "ayi", "aslan", "fil",
@@ -7,7 +9,7 @@ const animalNames = [
 // Hayvanların tam verisini otomatik oluşturan liste
 const allAnimalsData = animalNames.map(name => ({
     id: name,
-    image: `assets/images/hayvanlar/${name}.png`,
+    image: `assets/images/hayvanlar/${name}.webp`,
     audio: `assets/sounds/soru_${name}.mp3`,
     correctAudio: `assets/sounds/dogru_${name}.mp3`,
     wrongAudio: `assets/sounds/isim_${name}.mp3`
@@ -18,12 +20,34 @@ const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioConfetti = new Audio('assets/sounds/konfeti.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 let currentQuestionAudio = null;
+
+// Konfeti Fonksiyonu
+function triggerConfetti() {
+    if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+    }
+}
 
 // Oyun Durumu Değişkenleri
 let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
+
+// Görsel sayısına göre grid düzeni ve boyut hesaplar
+function calcLayout(n) {
+    const isMobile = window.innerWidth <= 600;
+    const cols = isMobile ? (n <= 1 ? 1 : 2) : (n <= 4 ? 2 : 3);
+    const rows = Math.ceil(n / cols);
+    const gap = isMobile ? 16 : 24;
+    const availW = window.innerWidth - 60;
+    const itemW = (availW - gap * (cols - 1)) / cols;
+    const availH = window.innerHeight - 160;
+    const itemByH = isMobile ? itemW : (availH - gap * (rows - 1)) / rows;
+    const size = Math.floor(Math.min(itemW, itemByH, 260));
+    return { size, cols, gap };
+}
 
 // Diziyi karıştıran fonksiyon
 function shuffleArray(array) {
@@ -76,13 +100,16 @@ function startLevel(levelNumber) {
 // O Anki Aşamayı Ekrana Çizen Fonksiyon
 function renderStage() {
     const gameBoard = document.getElementById('game-board');
-    const levelTitle = document.getElementById('level-title');
     gameBoard.innerHTML = '';
 
     const currentStageData = currentStages[currentStageIndex];
-    levelTitle.innerText = `Seviye ${currentLevelNumber} (Aşama ${currentStageIndex + 1}/${currentStages.length})`;
-
     currentQuestionAudio = new Audio(currentStageData.audio);
+
+    const { size, cols, gap } = calcLayout(currentStageData.fruits.length);
+    gameBoard.style.display = 'grid';
+    gameBoard.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+    gameBoard.style.gap = gap + 'px';
+    gameBoard.style.justifyContent = 'center';
 
     currentStageData.fruits.forEach(animal => {
         const wrapper = document.createElement('div');
@@ -93,6 +120,10 @@ function renderStage() {
         imgElement.decoding = 'async';
         imgElement.classList.add('fruit-item');
         imgElement.id = animal.id;
+        imgElement.style.width = size + 'px';
+        imgElement.style.height = size + 'px';
+        imgElement.style.padding = '10px';
+        imgElement.style.boxSizing = 'border-box';
 
         const crossElement = document.createElement('div');
         crossElement.classList.add('cross-mark');
@@ -111,7 +142,7 @@ function renderStage() {
 function playQuestionAudio() {
     if(currentQuestionAudio) {
         currentQuestionAudio.currentTime = 0;
-        currentQuestionAudio.play().catch(error => console.log("Otomatik oynatma engellendi."));
+        currentQuestionAudio.play().catch(() => console.log("Otomatik oynatma engellendi."));
     }
 }
 
@@ -180,60 +211,43 @@ function showLevelCompleteCelebration() {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
         audioLevelComplete.play();
-        triggerConfetti();
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
     } else {
-        content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-        content.className = 'celebration-content';
-
-        audioGrandFinale.play();
-        triggerGrandConfetti();
-
-        setTimeout(() => {
-            content.innerHTML += `
-                <div class="end-game-buttons">
-                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                    <button class="back-to-menu-btn" onclick="window.location.href='hayvanlar_menu.html'">⬅ Menüye Dön</button>
-                </div>
-            `;
-        }, 6000);
+        showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
     }
 }
 
-// Konfeti Fonksiyonu
-function triggerConfetti() {
-    confetti({
-        particleCount: 200,
-        spread: 100,
-        origin: { y: 0.5 }
-    });
-}
-
-// Büyük Final İçin Havai Fişek Etkili Sürekli Konfeti
-function triggerGrandConfetti() {
-    const duration = 5 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-
-    function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-            return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
 }
 
 // Sayfa yüklendiğinde Oyunu SEVİYE 1'den başlat

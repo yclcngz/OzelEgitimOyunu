@@ -1,304 +1,313 @@
-// Türkçe karakter içermeyen standartlaştırılmış 17 Meyve Listesi
-const fruitNames = [
-    "muz", "elma", "portakal", "cilek", "kiraz", "nar", "kivi",
-    "armut", "ananas", "mandalina", "karpuz", "kayisi", "seftali",
-    "kavun", "uzum", "avokado", "incir"
+const allAnimals = [
+    { id: "kedi",   name: "Kedi" },
+    { id: "kopek",  name: "Köpek" },
+    { id: "kus",    name: "Kuş" },
+    { id: "at",     name: "At" },
+    { id: "inek",   name: "İnek" },
+    { id: "koyun",  name: "Koyun" },
+    { id: "tavsan", name: "Tavşan" },
+    { id: "ayi",    name: "Ayı" },
+    { id: "aslan",  name: "Aslan" },
+    { id: "fil",    name: "Fil" },
+    { id: "zebra",  name: "Zebra" },
+    { id: "zurafa", name: "Zürafa" },
+    { id: "maymun", name: "Maymun" },
+    { id: "kaplan", name: "Kaplan" },
+    { id: "kurt",   name: "Kurt" },
+    { id: "tilki",  name: "Tilki" },
+    { id: "sincap", name: "Sincap" }
 ];
 
-// Meyvelerin tam verisini otomatik oluşturan liste
-const allFruitsData = fruitNames.map(name => ({
-    id: name,
-    image: `assets/images/meyveler/${name}.png`,
-    audio: `assets/sounds/soru_${name}.mp3`,
-    correctAudio: `assets/sounds/dogru_${name}.mp3`,
-    wrongAudio: `assets/sounds/isim_${name}.mp3`
-}));
-
-// Ortak Sesler
-const audioDat = new Audio('assets/sounds/dat.mp3'); 
-const audioConfetti = new Audio('assets/sounds/konfeti.mp3'); 
-const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); // YENİ: Kutlama sesi
-const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
-let currentQuestionAudio = null; 
-
-// Oyun Durumu Değişkenleri
-let currentLevelNumber = 1; // 1'den 5'e kadar
-let currentStages = [];     // O anki seviyenin tüm aşamaları
-let currentStageIndex = 0;  // O anki seviyede kaçıncı aşamadayız
-
-// Diziyi karıştıran fonksiyon
-function shuffleArray(array) {
-    let shuffled = [...array]; 
-    for (let i = shuffled.length - 1; i > 0; i--) {
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; 
+        [a[i], a[j]] = [a[j], a[i]];
     }
-    return shuffled;
+    return a;
 }
 
-// Belirli bir seviye için aşamaları (grupları) oluşturan AKILLI FONKSİYON
-function generateStagesForLevel(levelNumber) {
-    // Seviye 1'de 2 nesne, Seviye 2'de 3 nesne ... Seviye 5'te 6 nesne
-    const itemsPerStage = levelNumber + 1; 
-    
-    // Meyve havuzunu karıştır
-    let pool = shuffleArray(allFruitsData);
-    let stages = [];
+// Dinle aşamaları: 17 hayvanı 4'lü gruplara böl
+const listenStages = [];
+for (let i = 0; i < allAnimals.length; i += 4) {
+    listenStages.push({ type: 'listen', animals: allAnimals.slice(i, i + 4) });
+}
 
-    while (pool.length > 0) {
-        let stageFruits = [];
-        
-        // Havuzda yeterince meyve varsa al
-        if (pool.length >= itemsPerStage) {
-            stageFruits = pool.splice(0, itemsPerStage);
-        } else {
-            // Sonda az meyve kaldıysa (örn: 17 meyve 2'ye bölünürse en sona 1 artar)
-            // Kalanı al, üstünü daha önce sorulmuşlardan rastgele tamamla
-            stageFruits = pool.splice(0, pool.length);
-            
-            // Bu aşamada zaten olan meyveleri dışarıda bırakıp diğerlerinden seç
-            let fillerPool = shuffleArray(allFruitsData).filter(f => !stageFruits.includes(f));
-            let needed = itemsPerStage - stageFruits.length;
-            stageFruits = stageFruits.concat(fillerPool.splice(0, needed));
+// Quiz aşamaları: her hayvan için 1 quiz (karışık sıra)
+const quizStages = shuffleArray([...allAnimals]).map(a => ({ type: 'quiz', correct: a }));
+
+const allStages = [...listenStages, ...quizStages];
+
+// Ses dosyaları
+const audioOnay = new Audio('assets/sounds/onay.mp3');
+const audioDat  = new Audio('assets/sounds/dat.mp3');
+const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
+const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+
+let currentStageIdx = 0;
+let currentAudio = null;
+let currentListenCard = null;
+let quizLocked = false;
+
+// --- YARDIMCI ---
+function stopCurrentAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.onended = null;
+        currentAudio = null;
+    }
+}
+
+function playAnimalSoundTimes(animalId, timesLeft) {
+    if (timesLeft <= 0) return;
+    const audio = new Audio(`assets/sounds/hayvan sesleri/${animalId}_ses.mp3`);
+    currentAudio = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => {
+        currentAudio = null;
+        if (timesLeft > 1) {
+            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1), 500);
         }
+    };
+}
 
-        // Bu aşamanın doğru cevabını (hedef meyveyi) rastgele seç
-        const targetFruit = stageFruits[Math.floor(Math.random() * stageFruits.length)];
+// --- ANA RENDER ---
+function renderStage() {
+    stopCurrentAudio();
+    if (currentListenCard) { currentListenCard.classList.remove('playing'); currentListenCard = null; }
+    quizLocked = false;
 
-        // Aşamayı listeye ekle (eklerken meyvelerin yerini tekrar karıştır)
-        stages.push({
-            target: targetFruit.id,
-            audio: targetFruit.audio,
-            correctAudio: targetFruit.correctAudio,
-            fruits: shuffleArray(stageFruits)
-        });
+    const stage = allStages[currentStageIdx];
+
+    if (stage.type === 'listen') {
+        document.getElementById('sounds-grid').classList.remove('hidden');
+        document.getElementById('quiz-area').classList.add('hidden');
+        renderListenStage(stage);
+    } else {
+        document.getElementById('sounds-grid').classList.add('hidden');
+        document.getElementById('quiz-area').classList.remove('hidden');
+        renderQuizStage(stage);
     }
-    return stages;
 }
 
-// Yeni Bir Seviyeyi Başlatan Fonksiyon
-function startLevel(levelNumber) {
-    currentLevelNumber = levelNumber;
-    currentStageIndex = 0;
-    currentStages = generateStagesForLevel(levelNumber);
-    renderStage();
-}
-
-// Görsel sayısına göre grid düzeni ve boyut hesaplar (Akıllı Boyutlandırma)
-function calcLayout(n) {
-    const isMobile = window.innerWidth <= 600;
-    
-    // Özel Eğitim Çocukları için mobilde maksimum 2 sütun (büyük nesneler)
-    const cols = isMobile ? (n === 1 ? 1 : 2) : (n <= 4 ? 2 : 3);
+// Kare boyut hesaplama için yardımcı
+function calcListenSize(n) {
+    const cols = n <= 1 ? 1 : 2;
     const rows = Math.ceil(n / cols);
-    const gap = isMobile ? 16 : 24;
-    
-    const availW = window.innerWidth - 48; // Ekran genişliği payı
-    const itemW = (availW - gap * (cols - 1)) / cols;
-    
-    // Dikey alana zorla sığdırmak yerine mobilde serbest bırakıyoruz
-    // Bilgisayarda ise tam ekrana sığsın
-    const availH = window.innerHeight - 120;
-    const itemH = isMobile ? itemW : (availH - gap * (rows - 1)) / rows;
-    
-    // Boyutu seç, asla çok küçültme
-    let size = Math.floor(Math.min(itemW, itemH, 260));
-    
-    // Çok küçülüyorsa tam sığdırmayı bırak, genişliğe göre büyüt
-    if (size < 140 && isMobile) {
-        size = itemW; 
-    }
-    
+    const gap = 16;
+    const availW = Math.min(window.innerWidth - 60, 700);
+    const availH = window.innerHeight - 180;
+    const itemByW = (availW - gap * (cols - 1)) / cols;
+    const itemByH = (availH - gap * (rows - 1)) / rows;
+    const size = Math.floor(Math.min(itemByW, itemByH, 220));
     return { size, cols, gap };
 }
 
-// O Anki Aşamayı Ekrana Çizen Fonksiyon
-function renderStage() {
-    const gameBoard = document.getElementById('game-board');
-    gameBoard.innerHTML = '';
+// --- DİNLE AŞAMASI ---
+function renderListenStage(stage) {
+    const grid = document.getElementById('sounds-grid');
+    grid.innerHTML = '';
 
-    const currentStageData = currentStages[currentStageIndex];
+    const n = stage.animals.length;
+    const { size, cols, gap } = calcListenSize(n);
 
-    currentQuestionAudio = new Audio(currentStageData.audio);
+    grid.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+    grid.style.gap = gap + 'px';
 
-    const { size, cols, gap } = calcLayout(currentStageData.fruits.length);
-    gameBoard.style.display = 'grid';
-    gameBoard.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
-    gameBoard.style.gap = gap + 'px';
-    gameBoard.style.justifyContent = 'center';
+    const imgSize = Math.floor(size * 0.62);
 
-    currentStageData.fruits.forEach(fruit => {
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('fruit-wrapper');
+    // Komut sesini çal
+    setTimeout(() => {
+        const cmdAudio = new Audio('assets/sounds/hayvan_sesleri_komut.mp3');
+        cmdAudio.play().catch(() => {});
+    }, 500);
 
-        const imgElement = document.createElement('img');
-        imgElement.src = fruit.image;
-        imgElement.decoding = 'async';
-        imgElement.classList.add('fruit-item');
-        imgElement.id = fruit.id;
-        imgElement.style.width = size + 'px';
-        imgElement.style.height = size + 'px';
-        imgElement.style.padding = '10px';
-        imgElement.style.boxSizing = 'border-box';
+    let listenedCount = 0;
 
-        const crossElement = document.createElement('div');
-        crossElement.classList.add('cross-mark');
-        crossElement.innerHTML = '❌';
+    stage.animals.forEach(animal => {
+        const card = document.createElement('div');
+        card.classList.add('animal-sound-card');
+        card.style.width = size + 'px';
+        card.style.height = size + 'px';
+        card.innerHTML = `
+            <img src="assets/images/hayvanlar/${animal.id}.webp" alt="${animal.name}" style="width:${imgSize}px;height:${imgSize}px;">
+            <div class="animal-name">${animal.name}</div>
+            <div class="sound-icon">🔊</div>
+        `;
 
-        imgElement.addEventListener('click', () => checkAnswer(fruit.id, wrapper));
+        card.addEventListener('click', () => {
+            if (currentListenCard === card && currentAudio && !currentAudio.paused) {
+                stopCurrentAudio();
+                card.classList.remove('playing');
+                currentListenCard = null;
+                return;
+            }
+            stopCurrentAudio();
+            if (currentListenCard) currentListenCard.classList.remove('playing');
 
-        wrapper.appendChild(imgElement);
-        wrapper.appendChild(crossElement);
-        gameBoard.appendChild(wrapper);
+            const audio = new Audio(`assets/sounds/hayvan sesleri/${animal.id}_ses.mp3`);
+            currentAudio = audio;
+            currentListenCard = card;
+            card.classList.add('playing');
+            audio.play().catch(() => {});
+            audio.onended = () => {
+                card.classList.remove('playing');
+                currentAudio = null;
+                currentListenCard = null;
+            };
+
+            if (!card.dataset.listened) {
+                card.dataset.listened = '1';
+                card.classList.add('listened');
+                listenedCount++;
+                if (listenedCount === stage.animals.length) {
+                    setTimeout(() => {
+                        currentStageIdx++;
+                        if (currentStageIdx < allStages.length) {
+                            renderStage();
+                        } else {
+                            showCelebration();
+                        }
+                    }, 1200);
+                }
+            }
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+// --- QUIZ AŞAMASI ---
+function renderQuizStage(stage) {
+    const grid = document.getElementById('choices-grid');
+    grid.innerHTML = '';
+
+    const wrong   = shuffleArray(allAnimals.filter(a => a.id !== stage.correct.id)).slice(0, 3);
+    const choices = shuffleArray([stage.correct, ...wrong]);
+
+    // 2×2 kare grid için boyut hesapla
+    const cols = 2;
+    const rows = 2;
+    const gap = 14;
+    const availW = Math.min(window.innerWidth - 48, 560);
+    const availH = window.innerHeight - 200;
+    const cardByW = Math.floor((availW - gap) / cols);
+    const cardByH = Math.floor((availH - gap) / rows);
+    const cardSize = Math.min(cardByW, cardByH, 240);
+    const imgSize  = Math.floor(cardSize * 0.72);
+
+    grid.style.gridTemplateColumns = `repeat(${cols}, ${cardSize}px)`;
+    grid.style.gap = gap + 'px';
+    grid.style.maxWidth = 'none';
+
+    choices.forEach(animal => {
+        const card = document.createElement('div');
+        card.classList.add('choice-card');
+        card.style.width = cardSize + 'px';
+        card.style.minHeight = cardSize + 'px';
+        card.innerHTML = `
+            <img src="assets/images/hayvanlar/${animal.id}.webp" alt="${animal.name}" style="width:${imgSize}px;height:${imgSize}px;">
+            <div class="cross-mark">❌</div>
+        `;
+        card.addEventListener('click', () => handleChoice(animal, stage.correct, card));
+        grid.appendChild(card);
     });
 
-    setTimeout(() => playQuestionAudio(), 500);
+    // Soru sesi: kimin_sesi.mp3 → hayvan sesi x3
+    const cmdAudio = new Audio('assets/sounds/kimin_sesi.mp3');
+    cmdAudio.play().catch(() => playAnimalSoundTimes(stage.correct.id, 3));
+    cmdAudio.onended = () => playAnimalSoundTimes(stage.correct.id, 3);
 }
 
-function playQuestionAudio() {
-    if(currentQuestionAudio) {
-        currentQuestionAudio.currentTime = 0; 
-        currentQuestionAudio.play().catch(error => console.log("Otomatik oynatma engellendi."));
-    }
-}
+// --- ŞIIK SEÇİMİ ---
+function handleChoice(chosen, correct, card) {
+    if (quizLocked) return;
 
-document.getElementById('play-audio-btn').addEventListener('click', playQuestionAudio);
-
-// Cevabı Kontrol Eden Fonksiyon
-function checkAnswer(clickedId, wrapperElement) {
-    const currentStageData = currentStages[currentStageIndex];
-
-    if(currentQuestionAudio) {
-        currentQuestionAudio.pause();
-        currentQuestionAudio.currentTime = 0;
-    }
-
-    if (clickedId === currentStageData.target) {
-        // --- DOĞRU CEVAP ---
-        audioConfetti.play(); 
-        triggerConfetti(); 
-
-        setTimeout(() => {
-            const specificCorrectAudio = new Audio(currentStageData.correctAudio);
-            specificCorrectAudio.play();
-            
-            specificCorrectAudio.onended = () => {
-                // Aşamayı (Stage) 1 artır
-                currentStageIndex++; 
-                
-                if (currentStageIndex < currentStages.length) {
-                    // Aynı seviyede sıradaki aşamaya geç
-                    renderStage(); 
-                } else {
-                    // --- SEVİYE BİTTİ (KUTLAMA EKRANI) ---
-                    showLevelCompleteCelebration();
-                }
-            };
-        }, 2000);
-
-    } else {
-        // --- YANLIŞ CEVAP ---
-        audioDat.play(); 
-
-        const cross = wrapperElement.querySelector('.cross-mark');
-        cross.classList.add('show-cross');
-
-        const img = wrapperElement.querySelector('.fruit-item');
-        img.classList.add('shake');
-        setTimeout(() => img.classList.remove('shake'), 500);
-
-        const clickedFruitData = currentStageData.fruits.find(fruit => fruit.id === clickedId);
-
-        setTimeout(() => {
-            if (clickedFruitData && clickedFruitData.wrongAudio) {
-                const specificWrongAudio = new Audio(clickedFruitData.wrongAudio);
-                specificWrongAudio.play();
-            }
-            cross.classList.remove('show-cross');
-        }, 2000); 
-    }
-}
-
-// Seviye Sonu ve Büyük Final Kutlama Fonksiyonu
-function showLevelCompleteCelebration() {
-    const overlay = document.getElementById('celebration-overlay');
-    const content = overlay.querySelector('.celebration-content');
-    
-    overlay.classList.remove('hidden');
-
-    if (currentLevelNumber < 5) {
-        // --- NORMAL SEVİYE SONU (1, 2, 3, 4) ---
-        content.innerHTML = '🤩👏'; 
-        content.className = 'celebration-content'; // Eski class'ı koru
-        audioLevelComplete.play();
+    if (chosen.id === correct.id) {
+        quizLocked = true;
+        stopCurrentAudio();
+        card.classList.add('correct');
+        audioOnay.currentTime = 0;
+        audioOnay.cloneNode().play();
         triggerConfetti();
 
-        audioLevelComplete.onended = () => {
-            overlay.classList.add('hidden');
-            startLevel(currentLevelNumber + 1);
-        };
-   // ... (Fonksiyonun üst kısmı aynı kalıyor) ...
+        setTimeout(() => {
+            card.classList.remove('correct');
+            currentStageIdx++;
+            if (currentStageIdx < allStages.length) {
+                renderStage();
+            } else {
+                showCelebration();
+            }
+        }, 1500);
+
     } else {
-        // --- BÜYÜK FİNAL (SEVİYE 5 SONU) ---
-        
-        // --- DEĞİŞİKLİK BURADA: Emojiyi silip GIF ekliyoruz ---
-        // content.innerHTML = '🏆'; // Eski kupa emojisi satırını sildik veya yorum satırı yaptık.
-        
-        // Yerine senin GIF dosyanı içeren <img> etiketini koyuyoruz.
-        content.innerHTML = '<img src="assets/images/tebrikler.gif" alt="Tebrikler" class="final-gif">';
-        
-        // Class ismini de CSS'te yazdığımız yeni isme göre güncelliyoruz.
-        content.className = 'celebration-content'; // Ana kapsayıcı class'ı
-        
-        // ... (Müzik ve Konfeti kısımları aynen kalıyor) ...
-        audioGrandFinale.play(); // Coşkulu zafer müziğini çal
-        triggerGrandConfetti(); // 5 saniyelik sürekli havai fişek konfetisi başlat
+        quizLocked = true;
+        card.classList.add('wrong');
+        audioDat.currentTime = 0;
+        audioDat.cloneNode().play();
 
         setTimeout(() => {
-            content.innerHTML += `
-                <div class="end-game-buttons">
-                    <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                    <button class="back-to-menu-btn" onclick="window.location.href='meyveler_menu.html'">⬅ Menüye Dön</button>
-                </div>
-            `;
-        }, 6000); 
+            card.classList.remove('wrong');
+            quizLocked = false;
+        }, 1000);
     }
 }
 
-// Konfeti Fonksiyonu
+// --- TEKRAR DİNLE ---
+document.getElementById('replay-btn').addEventListener('click', () => {
+    const stage = allStages[currentStageIdx];
+    if (stage.type === 'quiz') {
+        stopCurrentAudio();
+        playAnimalSoundTimes(stage.correct.id, 3);
+    } else {
+        stopCurrentAudio();
+        const cmd = new Audio('assets/sounds/hayvan_sesleri_komut.mp3');
+        cmd.play().catch(() => {});
+    }
+});
+
+// --- KUTLAMA ---
+function showCelebration() {
+    const overlay = document.getElementById('celebration-overlay');
+    const content = overlay.querySelector('.celebration-content');
+    overlay.classList.remove('hidden');
+    showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
+}
+
+function showFinaleVideo(overlay, content, menuUrl) {
+    content.innerHTML = `
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+    `;
+    content.className = 'celebration-content';
+    content.style.cssText = 'width:100%;height:100%;';
+    const vid = content.querySelector('#finale-video');
+    vid.onended = () => {
+        vid.remove();
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+    vid.onerror = () => {
+        content.style.cssText = '';
+        content.innerHTML = `
+            <div class="end-game-buttons">
+                <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='${menuUrl}'">⬅ Menüye Dön</button>
+            </div>
+        `;
+    };
+}
+
 function triggerConfetti() {
-    confetti({
-        particleCount: 200,
-        spread: 100,
-        origin: { y: 0.5 }
-    });
+    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
 }
 
-// Büyük Final İçin Havai Fişek Etkili Sürekli Konfeti
-function triggerGrandConfetti() {
-    const duration = 5 * 1000; // 5 saniye boyunca sürecek
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
-
-    function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-            return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        // Ekranın iki farklı köşesinden sürekli patlat
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-    }, 250);
-}
-
-// Sayfa yüklendiğinde Oyunu SEVİYE 1'den başlat
-window.onload = () => {
-    startLevel(1); 
-};
+// --- BAŞLAT ---
+renderStage();

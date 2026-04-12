@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Şekiller: Balon Patlatma</title>
     <meta name="theme-color" content="#3b82f6">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,29 +11,97 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="js/sw-register.js" defer></script>
+    <style>
+        /* Tam ekran sabitleme ve scroll kaldırma */
+        body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; touch-action: none; background-color: #f8fafc; }
+        
+        .game-container { 
+            height: 100vh; 
+            max-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            box-sizing: border-box; 
+            padding-top: 70px; /* Header için boşluk */
+            padding-bottom: 20px;
+            margin: 0 auto; 
+            width: 95%;
+            max-width: 900px;
+            background-color: transparent;
+            box-shadow: none;
+        }
+
+        .sky-area { 
+            height: 45vh !important; /* Gökyüzünü biraz yukarı doğru çekerek küçülttük */
+            flex: none; /* Eskisi gibi max uzayıp alttaki şekli ekran dışına itmesini engelledik */
+            width: 100%; 
+            position: relative; 
+            overflow: hidden; 
+            border-radius: 20px; 
+            margin: 10px 0; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Uçan Balonların Kuyruğu ve Sallanma Animasyonu */
+        .flying-shape::after {
+            content: '';
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            width: 3px;
+            height: 25px;
+            background: #94a3b8;
+            border-radius: 3px;
+            transform-origin: top center;
+            animation: tailWave 1s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes tailWave {
+            0% { transform: translateX(-50%) rotate(-20deg); }
+            100% { transform: translateX(-50%) rotate(20deg); }
+        }
+
+        /* Hedef şeklin (sorulan balon) kuyruğu — uçan balonlarla aynı */
+        .target-shape-container {
+            position: relative;
+            display: inline-block;
+        }
+        .target-shape-container::after {
+            content: '';
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            width: 3px;
+            height: 25px;
+            background: #94a3b8;
+            border-radius: 3px;
+            transform: translateX(-50%);
+            animation: tailWave 1s ease-in-out infinite alternate;
+        }
+
+        /* ZigZag Efekti (Zor seviyeler için) */
+        @keyframes zigZag {
+            0% { transform: translateX(-35px); }
+            100% { transform: translateX(35px); }
+        }
+    </style>
 </head>
 <body>
     <div id="celebration-overlay" class="overlay hidden">
         <div class="celebration-content">🤩👏</div>
     </div>
 
-    <div class="game-container" style="max-width: 900px;">
-        <div class="header">
-            <a href="sekiller_menu.html" class="back-btn">⬅ Menüye Dön</a>
-            <h2 id="level-title">Seviye 1</h2>
-            <div id="score-board" style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;">Patlatılan: 0 / 3</div>
-        </div>
+    <div class="carousel-header">
+        <a href="sekiller_menu.html" class="back-btn-carousel">⬅</a>
+    </div>
 
-        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+    <div class="game-container">
+        <button id="play-audio-btn" class="audio-btn" style="margin: 0 auto 5px auto; padding: 8px 16px; font-size: 1rem;">🔊 Sesi Tekrar Dinle</button>
 
-        <div id="sky-area" class="sky-area">
-            </div>
+        <div id="sky-area" class="sky-area"></div>
 
-        <div class="target-area">
-            <h3>Bu şekli bul ve patlat:</h3>
-            <div id="target-shape-container" class="target-shape-container">
-                </div>
-        </div>
+        <div id="score-board" style="font-size: 1.3rem; font-weight: bold; color: #e74c3c; margin-bottom: 5px; text-align: center;">Patlatılan: 0 / 3</div>
+        <div id="target-shape-container" class="target-shape-container" style="width: 90px; height: 90px; margin: 0 auto 25px auto;"></div>
     </div>
 
     <script src="js/sekiller_balon.js"></script>
