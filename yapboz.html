@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Yapboz</title>
+    <meta name="theme-color" content="#f97316">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+    <style>
+        .yapboz-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #shape-label {
+            font-size: 22px;
+            font-weight: 800;
+            color: #c2410c;
+            margin: 4px 0 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #progress-bar {
+            display: flex;
+            gap: 8px;
+            margin: 5px 0;
+        }
+
+        .prog-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: #fcd34d;
+            transition: background 0.3s;
+        }
+        .prog-dot.done   { background: #f97316; }
+        .prog-dot.active { background: #fb923c; box-shadow: 0 0 0 3px #fde68a; }
+
+        #instruction-bar {
+            background: rgba(255,255,255,0.9);
+            border-radius: 16px;
+            padding: 8px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #7c2d12;
+            margin: 0 16px 4px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            width: calc(100% - 32px);
+            max-width: 420px;
+        }
+
+        /* OYUN ALANI */
+        #puzzle-area {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 700px;
+            padding: 0 12px;
+            flex: 1;
+        }
+
+        /* HEDEF (iskelet) */
+        #target-board {
+            position: relative;
+            width: min(260px, 42vw);
+            height: min(260px, 42vw);
+            flex-shrink: 0;
+        }
+
+        #target-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .slot {
+            fill: rgba(200,200,200,0.2);
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            stroke-dasharray: 8 4;
+        }
+
+        .slot.filled {
+            fill: var(--piece-color);
+            stroke: none;
+            opacity: 0.9;
+        }
+
+        /* PARÇALAR HAVUZU */
+        #pieces-pool {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .piece-wrapper {
+            cursor: grab;
+            transition: transform 0.15s, opacity 0.3s;
+        }
+
+        .piece-wrapper:active { cursor: grabbing; transform: scale(1.1); }
+
+        .piece-wrapper.placed {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.2);
+        }
+
+        .piece-wrapper.shake {
+            animation: pieceShake 0.45s ease;
+        }
+
+        @keyframes pieceShake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-8px); }
+            40%     { transform: translateX(8px); }
+            60%     { transform: translateX(-5px); }
+            80%     { transform: translateX(5px); }
+        }
+
+        .piece-svg { display: block; }
+
+        .audio-btn-top {
+            position: absolute;
+            right: 16px;
+            top: 10px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(249,115,22,0.4);
+        }
+
+        @media (max-width: 480px) {
+            #puzzle-area { flex-direction: column; gap: 10px; }
+            #target-board { width: min(200px, 85vw); height: min(200px, 85vw); }
+            #pieces-pool { flex-direction: row; }
+        }
+    </style>
+</head>
+<body class="yapboz-page">
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🎉🧩</div>
+    </div>
+
+    <div class="carousel-header" style="position:relative;">
+        <a href="sekiller_menu.html" class="back-btn-carousel">⬅</a>
+        <button class="audio-btn-top" id="replay-btn">🔊 Tekrar</button>
+    </div>
+
+    <div id="shape-label">Üçgen</div>
+    <div id="progress-bar"></div>
+    <div id="instruction-bar">Parçaları sürükleyerek şekli tamamla!</div>
+
+    <div id="puzzle-area">
+        <div id="target-board">
+            <svg id="target-svg" viewBox="0 0 260 260"></svg>
+        </div>
+        <div id="pieces-pool"></div>
+    </div>
+
+    <script src="js/yapboz.js"></script>
+    <script src="js/common_bgm.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 {
   "scripts": {
     "build": "node build.js",
+    "start": "node build.js && npx serve www -l 3000",
     "cap:sync": "node build.js && npx cap sync",
     "cap:android": "npx cap open android",
     "optimize": "node optimize_images.js"

@@ -1,21 +1,16 @@
 const allAnimals = [
-    { id: "kedi",   name: "Kedi" },
-    { id: "kopek",  name: "Köpek" },
-    { id: "kus",    name: "Kuş" },
-    { id: "at",     name: "At" },
-    { id: "inek",   name: "İnek" },
-    { id: "koyun",  name: "Koyun" },
-    { id: "tavsan", name: "Tavşan" },
-    { id: "ayi",    name: "Ayı" },
-    { id: "aslan",  name: "Aslan" },
-    { id: "fil",    name: "Fil" },
-    { id: "zebra",  name: "Zebra" },
-    { id: "zurafa", name: "Zürafa" },
-    { id: "maymun", name: "Maymun" },
-    { id: "kaplan", name: "Kaplan" },
-    { id: "kurt",   name: "Kurt" },
-    { id: "tilki",  name: "Tilki" },
-    { id: "sincap", name: "Sincap" }
+    { id: "kedi",    name: "Kedi" },
+    { id: "kopek",   name: "Köpek" },
+    { id: "kus",     name: "Kuş" },
+    { id: "at",      name: "At" },
+    { id: "inek",    name: "İnek" },
+    { id: "koyun",   name: "Koyun" },
+    { id: "maymun",  name: "Maymun" },
+    { id: "kurt",    name: "Kurt" },
+    { id: "sincap",  name: "Sincap" },
+    { id: "tavuk",   name: "Tavuk" },
+    { id: "kurbaga", name: "Kurbağa" },
+    { id: "esek",    name: "Eşek" }
 ];
 
 function shuffleArray(arr) {
@@ -27,15 +22,15 @@ function shuffleArray(arr) {
     return a;
 }
 
-// 3 dinle aşaması + 17 quiz aşaması = 20 toplam
+// 3 dinle aşaması + 12 quiz aşaması = 15 toplam
 const listenStages = [
-    { type: 'listen', animals: allAnimals.slice(0, 6) },
-    { type: 'listen', animals: allAnimals.slice(6, 12) },
-    { type: 'listen', animals: allAnimals.slice(12) }
+    { type: 'listen', animals: allAnimals.slice(0, 4) },
+    { type: 'listen', animals: allAnimals.slice(4, 8) },
+    { type: 'listen', animals: allAnimals.slice(8) }
 ];
 
 const quizStages = shuffleArray([...allAnimals]).map(a => ({ type: 'quiz', correct: a }));
-const allStages = [...listenStages, ...quizStages]; // 20 aşama
+const allStages = [...listenStages, ...quizStages]; // 15 aşama
 
 // Ses dosyaları
 const audioOnay = new Audio('assets/sounds/onay.mp3');

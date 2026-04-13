@@ -1,5 +1,7 @@
 /**
  * Build script: www/ klasörüne tüm web dosyalarını kopyalar.
+ * - Kök dizindeki tüm .html dosyalarını otomatik bulur (listeye eklemek gerekmez)
+ * - Her build'de SW cache versiyonunu otomatik artırır
  * Kullanım: node build.js
  */
 const fs = require('fs');
@@ -7,16 +9,25 @@ const path = require('path');
 
 const SRC = __dirname;
 const DEST = path.join(__dirname, 'www');
-
-const INCLUDE = [
-  'index.html', 'meyveler_menu.html', 'renkler_menu.html',
-  'sekiller_menu.html', 'nesneler_menu.html', 'meyveleri_taniyalim.html',
-  'eslestirme.html', 'bulmaca.html', 'renkler_surukle.html',
-  'sekiller_balon.html', 'mutfak_oyunlari.html',
-  'manifest.json', 'sw.js'
-];
+const SW_PATH = path.join(SRC, 'sw.js');
 
 const DIRS = ['css', 'js', 'assets'];
+
+// --- SW versiyonunu otomatik artır ---
+function bumpSwVersion() {
+  let content = fs.readFileSync(SW_PATH, 'utf8');
+  const match = content.match(/CACHE_NAME\s*=\s*'egitim-oyunu-v(\d+)'/);
+  if (match) {
+    const newVersion = parseInt(match[1]) + 1;
+    content = content.replace(
+      /CACHE_NAME\s*=\s*'egitim-oyunu-v\d+'/,
+      `CACHE_NAME = 'egitim-oyunu-v${newVersion}'`
+    );
+    fs.writeFileSync(SW_PATH, content, 'utf8');
+    return newVersion;
+  }
+  return null;
+}
 
 function copyFile(src, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -37,14 +48,28 @@ function copyDir(src, dest) {
   }
 }
 
-// Temizle ve yeniden oluştur
-if (fs.existsSync(DEST)) fs.rmSync(DEST, { recursive: true });
-fs.mkdirSync(DEST);
+// --- SW versiyonunu artır ---
+const newVersion = bumpSwVersion();
+if (newVersion) {
+  console.log(`✓ SW cache versiyonu → v${newVersion}`);
+}
 
-// Tekil dosyaları kopyala
-INCLUDE.forEach(f => copyFile(path.join(SRC, f), path.join(DEST, f)));
+// --- www/ klasörünü oluştur ---
+fs.mkdirSync(DEST, { recursive: true });
 
-// Klasörleri kopyala
+// --- Kök dizindeki tüm .html dosyalarını otomatik kopyala ---
+const htmlFiles = fs.readdirSync(SRC).filter(f => f.endsWith('.html'));
+htmlFiles.forEach(f => copyFile(path.join(SRC, f), path.join(DEST, f)));
+
+// --- manifest.json ve sw.js kopyala ---
+['manifest.json', 'sw.js'].forEach(f => {
+  if (fs.existsSync(path.join(SRC, f))) {
+    copyFile(path.join(SRC, f), path.join(DEST, f));
+  }
+});
+
+// --- css, js, assets klasörlerini kopyala ---
 DIRS.forEach(d => copyDir(path.join(SRC, d), path.join(DEST, d)));
 
-console.log('✓ www/ klasörü hazır. Şimdi "npx cap sync" çalıştırabilirsiniz.');
+console.log(`✓ ${htmlFiles.length} HTML dosyası kopyalandı: ${htmlFiles.join(', ')}`);
+console.log('✓ www/ klasörü hazır.');

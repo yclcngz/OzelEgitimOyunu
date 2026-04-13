@@ -3,7 +3,8 @@ window.MAX_LEVEL = 5;
 // Türkçe karakter içermeyen standartlaştırılmış 17 Hayvan Listesi
 const animalNames = [
     "kedi", "kopek", "kus", "at", "inek", "koyun", "tavsan", "ayi", "aslan", "fil",
-    "zebra", "zurafa", "maymun", "kaplan", "kurt", "tilki", "sincap"
+    "zebra", "zurafa", "maymun", "kaplan", "kurt", "tilki", "sincap",
+    "balik", "tavuk", "esek", "kurbaga"
 ];
 
 // Hayvanların tam verisini otomatik oluşturan liste

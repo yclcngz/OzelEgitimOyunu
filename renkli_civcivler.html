@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Renkli Civcivler</title>
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body>
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🤩👏</div>
+    </div>
+
+    <div class="carousel-header">
+        <a href="renkler_menu.html" class="back-btn-carousel">⬅</a>
+    </div>
+
+    <div class="game-container" style="max-width: 1200px;">
+        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+
+        <div class="matching-board">
+            <div id="left-column" class="match-column"></div>
+            <div id="right-column" class="match-column"></div>
+        </div>
+    </div>
+
+    <script src="js/renkli_civcivler.js"></script>
+    <script src="js/common_bgm.js"></script>
+</body>
+</html>

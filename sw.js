@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v11';
+const CACHE_NAME = 'egitim-oyunu-v18';
 
 const CORE_ASSETS = [
   './index.html',
@@ -58,6 +58,23 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  const url = new URL(event.request.url);
+
+  // JS dosyaları: network-first (her zaman güncel versiyon)
+  if (url.pathname.endsWith('.js')) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Diğer dosyalar: cache-first
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;

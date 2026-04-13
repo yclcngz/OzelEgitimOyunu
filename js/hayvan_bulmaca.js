@@ -2,7 +2,8 @@ window.MAX_LEVEL = 3;
 
 const animalNames = [
     "kedi", "kopek", "kus", "at", "inek", "koyun", "tavsan", "ayi", "aslan", "fil",
-    "zebra", "zurafa", "maymun", "kaplan", "kurt", "tilki", "sincap"
+    "zebra", "zurafa", "maymun", "kaplan", "kurt", "tilki", "sincap",
+    "balik", "tavuk", "esek", "kurbaga"
 ];
 
 const allAnimalsData = animalNames.map(name => ({
