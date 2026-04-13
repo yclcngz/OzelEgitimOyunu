@@ -152,22 +152,6 @@
             box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
         }
 
-        /* Ses butonu */
-        .audio-btn-top {
-            position: absolute;
-            right: 16px;
-            top: 10px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.4);
-        }
-
         @media (max-width: 480px) {
             .game-area {
                 flex-direction: column;
@@ -187,7 +171,8 @@
 
     <div class="carousel-header" style="position:relative;">
         <a href="renkler_menu.html" class="back-btn-carousel">⬅</a>
-        <button class="audio-btn-top" id="replay-btn">🔊 Tekrar</button>
+        <div id="bgm-btn-slot"></div>
+        <button class="replay-header-btn" id="replay-btn">🔊 Tekrar</button>
     </div>
 
     <div id="command-box">
@@ -204,6 +189,7 @@
     </div>
 
     <script src="js/renkli_toplar.js"></script>
+    <script>window.BGM_SRC = 'assets/sounds/renkli_toplar_sarki.mp3';</script>
     <script src="js/common_bgm.js"></script>
 </body>
 </html>

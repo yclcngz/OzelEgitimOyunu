@@ -109,20 +109,6 @@
             max-width: 420px;
         }
 
-        .audio-btn-top {
-            position: absolute;
-            right: 16px;
-            top: 10px;
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(139,92,246,0.4);
-        }
     </style>
 </head>
 <body class="nokta-page">
@@ -132,7 +118,8 @@
 
     <div class="carousel-header" style="position:relative;">
         <a href="sekiller_menu.html" class="back-btn-carousel">⬅</a>
-        <button class="audio-btn-top" id="replay-btn">🔊 Tekrar</button>
+        <div id="bgm-btn-slot"></div>
+        <button class="replay-header-btn" id="replay-btn">🔊 Tekrar</button>
     </div>
 
     <div id="shape-label">Üçgen</div>
@@ -144,6 +131,7 @@
     </div>
 
     <script src="js/noktalari_birlestir.js"></script>
+    <script>window.BGM_SRC = 'assets/sounds/noktalari_birlestir_sarki.mp3';</script>
     <script src="js/common_bgm.js"></script>
 </body>
 </html>

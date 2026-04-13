@@ -2,11 +2,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Müzik Kontrol Butonu ---
     const bgmBtn = document.createElement('button');
     bgmBtn.id = 'global-bgm-btn';
-    bgmBtn.className = 'global-bgm-btn';
     bgmBtn.innerHTML = '🎵 Müzik';
-    document.body.appendChild(bgmBtn);
 
-    const bgmAudio = new Audio('assets/sounds/ortak_oyun_ses.mp3');
+    const slot = document.getElementById('bgm-btn-slot');
+    if (slot) {
+        bgmBtn.className = 'inline-bgm-btn';
+        slot.appendChild(bgmBtn);
+    } else {
+        bgmBtn.className = 'global-bgm-btn';
+        document.body.appendChild(bgmBtn);
+    }
+
+    const bgmSrc = (typeof window.BGM_SRC !== 'undefined') ? window.BGM_SRC : 'assets/sounds/ortak_oyun_ses.mp3';
+    const bgmAudio = new Audio(bgmSrc);
     bgmAudio.loop = true;
     bgmAudio.volume = 0.06;
     

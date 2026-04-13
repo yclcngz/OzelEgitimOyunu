@@ -617,6 +617,53 @@ body.carousel-page {
     box-shadow: 0 4px 0 #475569, 0 8px 20px rgba(100,116,139,0.35);
 }
 
+/* --- HEADER İÇİ MÜZİK BUTONU (inline-bgm-btn) --- */
+.inline-bgm-btn {
+    position: absolute;
+    left: 115px;
+    top: 22px;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #1d4ed8, 0 8px 20px rgba(59,130,246,0.45);
+    white-space: nowrap;
+    z-index: 30;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.inline-bgm-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0px 0 #1d4ed8, 0 4px 8px rgba(59,130,246,0.35);
+}
+.inline-bgm-btn.muted {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 0 #475569, 0 8px 20px rgba(100,116,139,0.35);
+}
+
+/* --- HEADER MERKEZİ TEKRAR BUTONU (replay-header-btn) --- */
+.replay-header-btn {
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #5b21b6, 0 8px 15px rgba(168,85,247,0.4);
+    white-space: nowrap;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.replay-header-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0px 0 #5b21b6, 0 4px 8px rgba(168,85,247,0.35);
+}
+
 /* --- KART GEÇİŞ ANİMASYONLARI --- */
 @keyframes card-enter-right {
     0%   { opacity: 0; transform: translateX(60px) scale(0.93); }
