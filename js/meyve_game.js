@@ -30,6 +30,7 @@ let currentQuestionAudio = null;
 let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
+let isFirstMove = true;
 
 function shuffleArray(array) {
     let shuffled = [...array];
@@ -73,6 +74,7 @@ function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
+    if (levelNumber === 1) isFirstMove = true;
     renderStage();
 }
 
@@ -126,7 +128,14 @@ function renderStage() {
         gameBoard.appendChild(wrapper);
     });
 
-    setTimeout(() => playQuestionAudio(), 500);
+    setTimeout(() => {
+        playQuestionAudio();
+        if (isFirstMove) {
+            currentQuestionAudio.onended = () => {
+                showHandHint(currentStageData.target);
+            };
+        }
+    }, 500);
 }
 
 function playQuestionAudio() {
@@ -138,8 +147,74 @@ function playQuestionAudio() {
 
 document.getElementById('play-audio-btn').addEventListener('click', playQuestionAudio);
 
+function showHandHint(targetId, totalTaps = 3) {
+    isFirstMove = false;
+    const targetEl = document.getElementById(targetId);
+    if (!targetEl) return;
+
+    const rect = targetEl.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+
+    // Parmak ucu meyvenin ortasına değecek şekilde konumlandır
+    const tapTop = rect.top + rect.height * 0.3;
+    // Tıklamalar arası bekleme konumu (biraz daha aşağıda)
+    const restTop = tapTop + 90;
+    // Başlangıç konumu: ekranın altının dışında
+    const offScreenTop = window.innerHeight + 100;
+
+    const FONT_SIZE = 72;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: ${centerX - FONT_SIZE / 2}px;
+        top: 0px;
+        transform: translateY(${offScreenTop}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let tapCount = 0;
+
+    // Ekranın altından rest pozisyonuna gelsin
+    hand.animate([
+        { transform: `translateY(${offScreenTop}px)` },
+        { transform: `translateY(${restTop}px)` }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = doTap;
+
+    function doTap() {
+        if (tapCount >= totalTaps) {
+            // 3 tıklamadan sonra aşağı çekil
+            hand.animate([
+                { transform: `translateY(${restTop}px)` },
+                { transform: `translateY(${offScreenTop}px)` }
+            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+            return;
+        }
+        tapCount++;
+        // Yukarı tıkla → geri çekil
+        hand.animate([
+            { transform: `translateY(${restTop}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+            { transform: `translateY(${tapTop}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+            { transform: `translateY(${restTop}px)` }
+        ], { duration: 550, fill: 'forwards' }).onfinish = () => {
+            setTimeout(doTap, 280);
+        };
+    }
+}
+
 function checkAnswer(clickedId, wrapperElement) {
     const currentStageData = currentStages[currentStageIndex];
+
+    // El animasyonu varsa kaldır
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     if (currentQuestionAudio) {
         currentQuestionAudio.pause();
@@ -180,6 +255,9 @@ function checkAnswer(clickedId, wrapperElement) {
             if (clickedFruitData && clickedFruitData.wrongAudio) {
                 const specificWrongAudio = new Audio(clickedFruitData.wrongAudio);
                 specificWrongAudio.play();
+                specificWrongAudio.onended = () => showHandHint(currentStageData.target, 1);
+            } else {
+                showHandHint(currentStageData.target, 1);
             }
             cross.classList.remove('show-cross');
         }, 2000);
