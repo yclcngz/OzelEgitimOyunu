@@ -20,6 +20,7 @@ const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
+let isFirstMove = true;
 let selectedLeft = null;
 let selectedRight = null;
 let matchedPairsCount = 0;
@@ -59,6 +60,7 @@ function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
+    if (levelNumber === 1) isFirstMove = true;
     renderStage();
 }
 
@@ -80,9 +82,15 @@ function renderStage() {
     leftCivcivs.forEach(c => createCivcivElement(c, 'left', leftColumn));
     rightCivcivs.forEach(c => createCivcivElement(c, 'right', rightColumn));
 
-    if (currentStageIndex === 0) {
-        setTimeout(() => playInstructionAudio(), 500);
-    }
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showMatchHint(3);
+            };
+        }
+    }, 500);
 }
 
 function createCivcivElement(civciv, side, parentElement) {
@@ -109,6 +117,9 @@ function createCivcivElement(civciv, side, parentElement) {
 
 function handleCivcivClick(imgElement, wrapper) {
     if (imgElement.classList.contains('matched-fruit') || isProcessing) return;
+
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     const side = imgElement.dataset.side;
 
@@ -177,6 +188,7 @@ function checkMatch() {
             crossL.classList.remove('show-cross');
             crossR.classList.remove('show-cross');
             isProcessing = false;
+            showMatchHint(1);
         }, 1000);
     }
 }
@@ -187,6 +199,98 @@ function playInstructionAudio() {
 }
 
 document.getElementById('play-audio-btn').addEventListener('click', playInstructionAudio);
+
+function showMatchHint(totalRounds) {
+    const leftImgs = [...document.querySelectorAll('#left-column .fruit-item:not(.matched-fruit)')];
+    if (!leftImgs.length) return;
+    const leftImg = leftImgs[0];
+    const targetId = leftImg.dataset.id;
+    const rightImgs = [...document.querySelectorAll('#right-column .fruit-item:not(.matched-fruit)')];
+    const rightImg = rightImgs.find(img => img.dataset.id === targetId);
+    if (!rightImg) return;
+    showHandHint(leftImg, rightImg, totalRounds);
+}
+
+function showHandHint(leftEl, rightEl, totalRounds) {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2 - FONT_SIZE / 2, tapY: rect.top + rect.height * 0.3, restY: rect.top + rect.height * 0.3 + 90 };
+    }
+
+    const left  = getPos(leftEl);
+    const right = getPos(rightEl);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${left.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let round = 0;
+
+    function doRound() {
+        round++;
+
+        hand.animate([
+            { transform: `translate(${left.x}px, ${offScreenY}px)` },
+            { transform: `translate(${left.x}px, ${left.restY}px)` }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+            hand.animate([
+                { transform: `translate(${left.x}px, ${left.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                { transform: `translate(${left.x}px, ${left.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                { transform: `translate(${left.x}px, ${left.restY}px)` }
+            ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                setTimeout(() => {
+                    hand.animate([
+                        { transform: `translate(${left.x}px, ${left.restY}px)` },
+                        { transform: `translate(${right.x}px, ${right.restY}px)` }
+                    ], { duration: 380, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                        hand.animate([
+                            { transform: `translate(${right.x}px, ${right.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                            { transform: `translate(${right.x}px, ${right.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                            { transform: `translate(${right.x}px, ${right.restY}px)` }
+                        ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                            hand.animate([
+                                { transform: `translate(${right.x}px, ${right.restY}px)` },
+                                { transform: `translate(${left.x}px, ${offScreenY}px)` }
+                            ], { duration: 380, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                                if (round < totalRounds) {
+                                    setTimeout(doRound, 250);
+                                } else {
+                                    hand.remove();
+                                }
+                            };
+                        };
+                    };
+                }, 220);
+            };
+        };
+    }
+
+    doRound();
+}
 
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');

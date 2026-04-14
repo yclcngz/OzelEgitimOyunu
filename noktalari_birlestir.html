@@ -18,6 +18,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             overflow: hidden;
         }
 
@@ -50,7 +51,6 @@
         #svg-container {
             width: min(420px, 95vw);
             height: min(420px, 95vw);
-            flex: 1;
         }
 
         #game-svg {
@@ -116,22 +116,18 @@
         <div class="celebration-content">🎉⭐</div>
     </div>
 
-    <div class="carousel-header" style="position:relative;">
+    <div class="carousel-header">
         <a href="sekiller_menu.html" class="back-btn-carousel">⬅</a>
-        <div id="bgm-btn-slot"></div>
         <button class="replay-header-btn" id="replay-btn">🔊 Tekrar</button>
     </div>
 
     <div id="shape-label">Üçgen</div>
     <div id="progress-bar"></div>
-    <div id="instruction-bar">Parmağını kaldırmadan noktaların üzerinden geçirerek şekli çiz!</div>
-
-    <div id="svg-container">
+<div id="svg-container">
         <svg id="game-svg" viewBox="0 0 400 400"></svg>
     </div>
 
     <script src="js/noktalari_birlestir.js"></script>
-    <script>window.BGM_SRC = 'assets/sounds/noktalari_birlestir_sarki.mp3';</script>
     <script src="js/common_bgm.js"></script>
 </body>
 </html>

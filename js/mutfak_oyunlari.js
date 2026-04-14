@@ -30,6 +30,7 @@ const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 let currentLevel = 1;
+let isFirstMove = true;
 
 // --- YARDIMCI FONKSİYONLAR ---
 function shuffleArray(array) {
@@ -72,6 +73,7 @@ function startLevel(level) {
     currentLevel = level;
     hideAllBoards();
     stopAllAudio();
+    isFirstMove = true;
 
     if (level === 1) renderLevel1();
     else if (level === 2) renderLevel2();
@@ -102,7 +104,10 @@ function renderLevel1() {
     renderLevel1SubStage();
 
     audioKomut.play().catch(() => console.log("Ses engellendi."));
-    audioKomut.onended = () => { isLevel1Playable = true; };
+    audioKomut.onended = () => {
+        isLevel1Playable = true;
+        if (isFirstMove) showClickHintLevel1();
+    };
 
     document.getElementById('play-audio-btn').onclick = () => {
         audioKomut.currentTime = 0;
@@ -142,6 +147,8 @@ function renderLevel1SubStage() {
 
         imgElement.addEventListener('click', () => {
             if (!isLevel1Playable) return;
+            const existingHand = document.getElementById('hand-hint');
+            if (existingHand) existingHand.remove();
 
             const itemAudio = new Audio(item.audio);
             itemAudio.play();
@@ -234,7 +241,10 @@ function renderLevel2Stage(stage) {
     rightItems.forEach(item => createMatchItem(item, 'right', rightCol, currentLevel2ImgSize));
 
     audioNesneleriEslestir.play().catch(() => console.log("Ses engellendi"));
-    audioNesneleriEslestir.onended = () => { isLevel2Playable = true; };
+    audioNesneleriEslestir.onended = () => {
+        isLevel2Playable = true;
+        if (isFirstMove) showMatchHintLevel2();
+    };
 }
 
 function createMatchItem(item, side, parent, imgSize) {
@@ -264,6 +274,8 @@ function createMatchItem(item, side, parent, imgSize) {
 
 function handleMatchClick(img, wrap) {
     if (!isLevel2Playable || img.classList.contains('matched-fruit') || isProcessing) return;
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     if (img.dataset.side === 'left') {
         if (selectedLeft) selectedLeft.img.classList.remove('selected-fruit');
@@ -313,6 +325,7 @@ function checkMatchLvl2() {
             curL.wrap.querySelector('.cross-mark').classList.remove('show-cross');
             curR.wrap.querySelector('.cross-mark').classList.remove('show-cross');
             isProcessing = false;
+            showMatchHintLevel2();
         }, 1000);
     }
 }
@@ -338,9 +351,11 @@ function renderLevel3() {
     const board = document.getElementById('level3-board');
     board.classList.remove('hidden');
 
-    // Komut sesini çal
     audioLvl3Komut.currentTime = 0;
     audioLvl3Komut.play().catch(() => console.log('Ses engellendi.'));
+    audioLvl3Komut.onended = () => {
+        if (isFirstMove) showCardHintLevel3();
+    };
 
     // Play butonuna bas → komutu tekrar çal
     document.getElementById('play-audio-btn').onclick = () => {
@@ -399,6 +414,8 @@ function renderLevel3SubStage() {
 
 function flipCard() {
     if (lockBoard || this === firstCard) return;
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
     this.classList.add('flipped');
 
     if (!hasFlippedCard) {
@@ -431,6 +448,7 @@ function flipCard() {
             firstCard.classList.remove('flipped');
             secondCard.classList.remove('flipped');
             resetBoard();
+            showCardHintLevel3();
         }, 1000);
     }
 }
@@ -438,6 +456,141 @@ function flipCard() {
 function resetBoard() {
     [hasFlippedCard, lockBoard] = [false, false];
     [firstCard, secondCard] = [null, null];
+}
+
+// ==========================================
+// EL İPUCU FONKSİYONLARI
+// ==========================================
+
+function _removeHandHint() {
+    const h = document.getElementById('hand-hint');
+    if (h) h.remove();
+}
+
+function _handHintOnElement(targetEl, totalTaps, onDone) {
+    isFirstMove = false;
+    _removeHandHint();
+
+    const rect = targetEl.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const tapTop  = rect.top + rect.height * 0.3;
+    const restTop = tapTop + 90;
+    const offScreenTop = window.innerHeight + 100;
+    const FONT_SIZE = 72;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed; font-size: ${FONT_SIZE}px; pointer-events: none;
+        z-index: 9999; left: ${centerX - FONT_SIZE / 2}px; top: 0px;
+        transform: translateY(${offScreenTop}px); will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let tapCount = 0;
+    hand.animate([
+        { transform: `translateY(${offScreenTop}px)` },
+        { transform: `translateY(${restTop}px)` }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = doTap;
+
+    function doTap() {
+        if (tapCount >= totalTaps) {
+            hand.animate([
+                { transform: `translateY(${restTop}px)` },
+                { transform: `translateY(${offScreenTop}px)` }
+            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                hand.remove();
+                if (onDone) onDone();
+            };
+            return;
+        }
+        tapCount++;
+        hand.animate([
+            { transform: `translateY(${restTop}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+            { transform: `translateY(${tapTop}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+            { transform: `translateY(${restTop}px)` }
+        ], { duration: 550, fill: 'forwards' }).onfinish = () => setTimeout(doTap, 280);
+    }
+}
+
+// SEVİYE 1: İlk resme tıkla göster
+function showClickHintLevel1() {
+    const items = [...document.querySelectorAll('#level1-board .fruit-item:not(.listened-item)')];
+    if (!items.length) return;
+    _handHintOnElement(items[0], 3);
+}
+
+// SEVİYE 2: Sol→Sağ eşleştirme göster
+function showMatchHintLevel2() {
+    isFirstMove = false;
+    const leftImgs  = [...document.querySelectorAll('#left-column .fruit-item:not(.matched-fruit)')];
+    if (!leftImgs.length) return;
+    const leftImg  = leftImgs[0];
+    const targetId = leftImg.dataset.id;
+    const rightImgs = [...document.querySelectorAll('#right-column .fruit-item:not(.matched-fruit)')];
+    const rightImg  = rightImgs.find(img => img.dataset.id === targetId);
+    if (!rightImg) return;
+
+    _removeHandHint();
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2 - FONT_SIZE / 2, tapY: rect.top + rect.height * 0.3, restY: rect.top + rect.height * 0.3 + 90 };
+    }
+
+    const left  = getPos(leftImg);
+    const right = getPos(rightImg);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed; font-size: ${FONT_SIZE}px; pointer-events: none;
+        z-index: 9999; left: 0px; top: 0px;
+        transform: translate(${left.x}px, ${offScreenY}px); will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    hand.animate([
+        { transform: `translate(${left.x}px, ${offScreenY}px)` },
+        { transform: `translate(${left.x}px, ${left.restY}px)` }
+    ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+        hand.animate([
+            { transform: `translate(${left.x}px, ${left.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+            { transform: `translate(${left.x}px, ${left.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+            { transform: `translate(${left.x}px, ${left.restY}px)` }
+        ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+            setTimeout(() => {
+                hand.animate([
+                    { transform: `translate(${left.x}px, ${left.restY}px)` },
+                    { transform: `translate(${right.x}px, ${right.restY}px)` }
+                ], { duration: 380, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+                    hand.animate([
+                        { transform: `translate(${right.x}px, ${right.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                        { transform: `translate(${right.x}px, ${right.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                        { transform: `translate(${right.x}px, ${right.restY}px)` }
+                    ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+                        hand.animate([
+                            { transform: `translate(${right.x}px, ${right.restY}px)` },
+                            { transform: `translate(${left.x}px, ${offScreenY}px)` }
+                        ], { duration: 380, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+                    };
+                };
+            }, 220);
+        };
+    };
+}
+
+// SEVİYE 3: Kart çevir göster
+function showCardHintLevel3() {
+    const cards = [...document.querySelectorAll('#level3-board .memory-card:not(.flipped)')];
+    if (!cards.length) return;
+    _handHintOnElement(cards[0], 3);
 }
 
 // ==========================================

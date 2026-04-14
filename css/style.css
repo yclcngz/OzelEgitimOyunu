@@ -620,7 +620,7 @@ body.carousel-page {
 /* --- HEADER İÇİ MÜZİK BUTONU (inline-bgm-btn) --- */
 .inline-bgm-btn {
     position: absolute;
-    left: 115px;
+    right: 16px;
     top: 22px;
     background: linear-gradient(135deg, #3b82f6, #6366f1);
     color: #ffffff;

@@ -9,6 +9,33 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Kart flip animasyonu için */
+        .fruit-wrapper { perspective: 700px; }
+        .card-inner {
+            transform-style: preserve-3d;
+            display: inline-block;
+        }
+        .card-front {
+            display: block;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            transform: rotateY(180deg);
+            background: radial-gradient(circle at 40% 35%, #fde68a, #f59e0b);
+            border-radius: 20px;
+            border: 3px solid #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="js/sw-register.js" defer></script>
 </head>

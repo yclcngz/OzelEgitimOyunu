@@ -20,7 +20,8 @@ const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
 window.MAX_LEVEL = 3;
 
-let currentLevelNumber = 1; 
+let currentLevelNumber = 1;
+let isFirstMove = true;
 let itemsToDrag = 0; // O aşamada atılması gereken toplam kart sayısı
 let itemsSuccessfullyDropped = 0; // Doğru atılan kart sayısı
 let globalColorPool = [];
@@ -39,6 +40,7 @@ function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
     if (levelNumber === 1) {
         globalColorPool = shuffleArray(colorsDatabase);
+        isFirstMove = true;
     }
     renderStage(levelNumber);
 }
@@ -118,7 +120,15 @@ function renderStage(level) {
     });
 
     // Sesi seviye başında çal
-    setTimeout(() => playInstructionAudio(), 500); 
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showDragHintForCards();
+            };
+        }
+    }, 500);
 }
 
 // --- DOKUNMATIK EKRAN DESTEĞİ (TOUCH) ---
@@ -127,6 +137,8 @@ let _touchClone = null;
 function addTouchSupport(dragItem) {
     dragItem.addEventListener('touchstart', e => {
         e.preventDefault();
+        const existingHand = document.getElementById('hand-hint');
+        if (existingHand) existingHand.remove();
         dragItem.style.opacity = '0.5';
 
         // Parmak altında sürüklenen görsel kopya
@@ -192,7 +204,10 @@ function addTouchSupport(dragItem) {
         } else {
             audioDat.cloneNode().play();
             dragItem.classList.add('shake');
-            setTimeout(() => dragItem.classList.remove('shake'), 500);
+            setTimeout(() => {
+                dragItem.classList.remove('shake');
+                showDragHintForCards();
+            }, 500);
         }
     });
 }
@@ -200,10 +215,10 @@ function addTouchSupport(dragItem) {
 // --- SÜRÜKLE BIRAK MOTORU (DRAG & DROP) ---
 
 function handleDragStart(e) {
-    // Sürüklenen kartın rengini ve kimliğini hafızaya al
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
     e.dataTransfer.setData('color', e.target.dataset.color);
     e.dataTransfer.setData('uniqueId', e.target.dataset.unique);
-    // Sürüklerken orijinal kartı hafif saydam yap
     setTimeout(() => e.target.style.opacity = '0.5', 0);
 }
 
@@ -258,7 +273,10 @@ function handleDrop(e) {
         // --- YANLIŞ SEPET ---
         audioDat.play();
         draggedElement.classList.add('shake');
-        setTimeout(() => draggedElement.classList.remove('shake'), 500);
+        setTimeout(() => {
+            draggedElement.classList.remove('shake');
+            showDragHintForCards();
+        }, 500);
     }
 }
 
@@ -326,7 +344,106 @@ function showFinaleVideo(overlay, content, menuUrl) {
     };
 }
 
+function showDragHintForCards() {
+    const cards = [...document.querySelectorAll('.color-card:not(.hidden-drag)')];
+    if (!cards.length) return;
+    const firstCard = cards[0];
+    const basketId = firstCard.dataset.color;
+    const basket = document.querySelector(`.color-basket[data-color="${basketId}"]`);
+    if (!basket) return;
+    showDragHint(firstCard, basket, 2);
+}
+
+function showDragHint(sourceEl, targetEl, totalRounds = 2) {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2 - FONT_SIZE / 2,
+            y: rect.top + rect.height * 0.3
+        };
+    }
+
+    const src = getPos(sourceEl);
+    const tgt = getPos(targetEl);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${src.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let round = 0;
+
+    function doRound() {
+        round++;
+
+        // 1. Alttan kaynağa gel
+        hand.animate([
+            { transform: `translate(${src.x}px, ${offScreenY}px)` },
+            { transform: `translate(${src.x}px, ${src.y}px)` }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+            // 2. Kısaca bas (seç)
+            hand.animate([
+                { transform: `translate(${src.x}px, ${src.y}px)`, easing: 'ease-in' },
+                { transform: `translate(${src.x}px, ${src.y + 20}px)`, easing: 'ease-out' },
+                { transform: `translate(${src.x}px, ${src.y}px)` }
+            ], { duration: 350, fill: 'forwards' }).onfinish = () => {
+
+                setTimeout(() => {
+                    // 3. Hedefe sürükle
+                    hand.animate([
+                        { transform: `translate(${src.x}px, ${src.y}px)` },
+                        { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                    ], { duration: 500, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                        // 4. Bırak
+                        hand.animate([
+                            { transform: `translate(${tgt.x}px, ${tgt.y}px)`, easing: 'ease-in' },
+                            { transform: `translate(${tgt.x}px, ${tgt.y + 20}px)`, easing: 'ease-out' },
+                            { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                        ], { duration: 300, fill: 'forwards' }).onfinish = () => {
+
+                            // 5. Çekil
+                            hand.animate([
+                                { transform: `translate(${tgt.x}px, ${tgt.y}px)` },
+                                { transform: `translate(${src.x}px, ${offScreenY}px)` }
+                            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                                if (round < totalRounds) {
+                                    setTimeout(doRound, 300);
+                                } else {
+                                    hand.remove();
+                                }
+                            };
+                        };
+                    };
+                }, 200);
+            };
+        };
+    }
+
+    doRound();
+}
+
 // Sayfa yüklendiğinde Lvl 1'den başla
 window.onload = () => {
-    startLevel(1); 
+    startLevel(1);
 };

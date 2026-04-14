@@ -17,15 +17,16 @@ const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
-let currentLevelNumber = 1; 
-let currentStages = [];     
-let currentStageIndex = 0;  
+let currentLevelNumber = 1;
+let currentStages = [];
+let currentStageIndex = 0;
 
 // Eşleştirme için tutulan değişkenler
 let selectedLeft = null;
 let selectedRight = null;
 let matchedPairsCount = 0; // O aşamada kaç çift eşleştirildi
 let isProcessing = false; // Animasyon sürerken tıklamayı engellemek için
+let isFirstMove = true;
 
 function shuffleArray(array) {
     let shuffled = [...array]; 
@@ -60,10 +61,11 @@ function generateStagesForLevel(levelNumber) {
 }
 
 function startLevel(levelNumber) {
-    if (levelNumber > 4) levelNumber = 4; // Dev menü ile 5'e basılsa bile en fazla 4. seviye açılır
+    if (levelNumber > 4) levelNumber = 4;
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
+    if (levelNumber === 1) isFirstMove = true;
     renderStage();
 }
 
@@ -89,7 +91,15 @@ function renderStage() {
     // Sağ Sütunu Çiz
     rightFruits.forEach(fruit => createFruitElement(fruit, 'right', rightColumn));
 
-    setTimeout(() => playInstructionAudio(), 500);
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showMatchHint(3);
+            };
+        }
+    }, 500);
 }
 
 function createFruitElement(fruit, side, parentElement) {
@@ -115,8 +125,11 @@ function createFruitElement(fruit, side, parentElement) {
 }
 
 function handleFruitClick(imgElement, wrapper) {
-    // Zaten eşleşmişse veya animasyon oynuyorsa işlem yapma
     if (imgElement.classList.contains('matched-fruit') || isProcessing) return;
+
+    // El animasyonu varsa kaldır
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     const side = imgElement.dataset.side;
 
@@ -186,14 +199,13 @@ function checkMatch() {
         currentLeft.img.classList.add('shake');
         currentRight.img.classList.add('shake');
 
-        // Tam 1 saniye bekle, sonra çarpıları ve seçimi kaldırıp oyuncuya tekrar deneme hakkı ver
         setTimeout(() => {
             currentLeft.img.classList.remove('shake', 'selected-fruit');
             currentRight.img.classList.remove('shake', 'selected-fruit');
             crossL.classList.remove('show-cross');
             crossR.classList.remove('show-cross');
-            
-            isProcessing = false; // Kilidi aç, oyuncu tekrar deneyebilsin
+            isProcessing = false;
+            showMatchHint(1);
         }, 1000); 
     }
 }
@@ -257,6 +269,108 @@ function showFinaleVideo(overlay, content, menuUrl) {
 
 function triggerConfetti() {
     confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+}
+
+function showMatchHint(totalRounds) {
+    // Eşleşmemiş ilk sol meyveyi bul
+    const leftImgs = [...document.querySelectorAll('#left-column .fruit-item:not(.matched-fruit)')];
+    if (!leftImgs.length) return;
+    const leftImg = leftImgs[0];
+    const targetId = leftImg.dataset.id;
+
+    // Sağ tarafta eşini bul
+    const rightImgs = [...document.querySelectorAll('#right-column .fruit-item:not(.matched-fruit)')];
+    const rightImg = rightImgs.find(img => img.dataset.id === targetId);
+    if (!rightImg) return;
+
+    showHandHint(leftImg, rightImg, totalRounds);
+}
+
+function showHandHint(leftEl, rightEl, totalRounds) {
+    isFirstMove = false;
+
+    // Önceki animasyon varsa kaldır
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2 - FONT_SIZE / 2, tapY: rect.top + rect.height * 0.3, restY: rect.top + rect.height * 0.3 + 90 };
+    }
+
+    const left  = getPos(leftEl);
+    const right = getPos(rightEl);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${left.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let round = 0;
+
+    function doRound() {
+        round++;
+
+        // 1. Alttan sol meyveye gel
+        hand.animate([
+            { transform: `translate(${left.x}px, ${offScreenY}px)` },
+            { transform: `translate(${left.x}px, ${left.restY}px)` }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+            // 2. Sol meyveye tıkla
+            hand.animate([
+                { transform: `translate(${left.x}px, ${left.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                { transform: `translate(${left.x}px, ${left.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                { transform: `translate(${left.x}px, ${left.restY}px)` }
+            ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                // 3. Sağ meyveye kaydır
+                setTimeout(() => {
+                    hand.animate([
+                        { transform: `translate(${left.x}px, ${left.restY}px)` },
+                        { transform: `translate(${right.x}px, ${right.restY}px)` }
+                    ], { duration: 380, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                        // 4. Sağ meyveye tıkla
+                        hand.animate([
+                            { transform: `translate(${right.x}px, ${right.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                            { transform: `translate(${right.x}px, ${right.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                            { transform: `translate(${right.x}px, ${right.restY}px)` }
+                        ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                            // 5. Aşağı çekil
+                            hand.animate([
+                                { transform: `translate(${right.x}px, ${right.restY}px)` },
+                                { transform: `translate(${left.x}px, ${offScreenY}px)` }
+                            ], { duration: 380, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                                if (round < totalRounds) {
+                                    setTimeout(doRound, 250);
+                                } else {
+                                    hand.remove();
+                                }
+                            };
+                        };
+                    };
+                }, 220);
+            };
+        };
+    }
+
+    doRound();
 }
 
 window.onload = () => {

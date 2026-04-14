@@ -18,7 +18,8 @@ const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
-let currentLevelNumber = 1; 
+let currentLevelNumber = 1;
+let isFirstMove = true;
 let currentTargetShape = null;
 let currentScore = 0;
 const targetScore = 5; // Seviye atlamak için gereken balon sayısı
@@ -69,7 +70,15 @@ function startLevel(levelNumber) {
     targetContainer.innerHTML = currentTargetShape.svg;
     targetContainer.style.color = currentTargetShape.color; // Hedef şeklin rengini ayarla
 
-    setTimeout(() => playInstructionAudio(), 500); 
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showTargetHint(3);
+            };
+        }
+    }, 500);
 
     // Balon Fabrikasını Çalıştır
     balloonInterval = setInterval(createBalloon, Math.max(800, spawnRate));
@@ -116,6 +125,10 @@ function createBalloon() {
 function handleBalloonClick(balloonElement) {
     const clickedId = balloonElement.dataset.id;
 
+    // El animasyonu varsa kaldır
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
+
     if (clickedId === currentTargetShape.id) {
         // --- DOĞRU BALON PATLATILDI ---
         audioPop.currentTime = 0;
@@ -160,11 +173,69 @@ function handleBalloonClick(balloonElement) {
         // İsteğe bağlı: Yanlış balonu kırmızı renge boyayıp hızlıca düşürebiliriz veya sadece sallayabiliriz
         balloonElement.style.animationPlayState = 'paused'; // Uçuşu anlık durdur
         balloonElement.classList.add('shake');
-        
+
         setTimeout(() => {
             balloonElement.classList.remove('shake');
-            balloonElement.style.animationPlayState = 'running'; // Uçuşa devam
+            balloonElement.style.animationPlayState = 'running';
+            showTargetHint(1);
         }, 500);
+    }
+}
+
+function showTargetHint(totalTaps = 3) {
+    isFirstMove = false;
+    const targetEl = document.getElementById('target-shape-container');
+    if (!targetEl) return;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const rect = targetEl.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const tapTop = rect.top + rect.height * 0.3;
+    const restTop = tapTop + 90;
+    const offScreenTop = window.innerHeight + 100;
+    const FONT_SIZE = 72;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: ${centerX - FONT_SIZE / 2}px;
+        top: 0px;
+        transform: translateY(${offScreenTop}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let tapCount = 0;
+
+    hand.animate([
+        { transform: `translateY(${offScreenTop}px)` },
+        { transform: `translateY(${restTop}px)` }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = doTap;
+
+    function doTap() {
+        if (tapCount >= totalTaps) {
+            hand.animate([
+                { transform: `translateY(${restTop}px)` },
+                { transform: `translateY(${offScreenTop}px)` }
+            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+            return;
+        }
+        tapCount++;
+        hand.animate([
+            { transform: `translateY(${restTop}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+            { transform: `translateY(${tapTop}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+            { transform: `translateY(${restTop}px)` }
+        ], { duration: 550, fill: 'forwards' }).onfinish = () => {
+            setTimeout(doTap, 280);
+        };
     }
 }
 

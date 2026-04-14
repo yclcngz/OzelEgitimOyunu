@@ -4,7 +4,7 @@
 //  Her kenarda 6 nokta, parmak kaldırınca ilerleme korunur
 // ============================================================
 
-const SND_BASE = 'assets/sounds/noktalari_birlestir/';
+const SND_BASE = 'assets/sounds/';
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
 
@@ -109,11 +109,12 @@ const SHAPES = [
 let currentShapeIdx = 0;
 let nextDotIdx = 0;
 let isDragging = false;
-let connectedPts = [];  // "x,y" string listesi
-let dotEls = [];        // { circle } referansları
+let connectedPts = [];
+let dotEls = [];
 let drawnPath = null;
 let cursorLine = null;
 let instructionAudio = null;
+let isFirstShape = true;
 
 const svg = document.getElementById('game-svg');
 
@@ -222,7 +223,12 @@ function renderShape(idx) {
     highlightNextDot();
 
     // Komut sesi
-    setTimeout(() => playAudio(`${SND_BASE}komut.mp3`), 400);
+    setTimeout(() => {
+        const a = playAudio(`${SND_BASE}komut.mp3`);
+        if (isFirstShape) {
+            a.onended = () => showDrawHint();
+        }
+    }, 400);
 }
 
 function highlightNextDot() {
@@ -250,6 +256,8 @@ function getEvtPt(e) {
 // --- DOKUNMA / FARE OLAYLARI ---
 svg.addEventListener('touchstart', e => {
     e.preventDefault();
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
     isDragging = true;
     handlePoint(getEvtPt(e));
 }, { passive: false });
@@ -269,6 +277,8 @@ svg.addEventListener('touchend', e => {
 }, { passive: false });
 
 svg.addEventListener('mousedown', e => {
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
     isDragging = true;
     handlePoint(getEvtPt(e));
 });
@@ -388,6 +398,66 @@ function showGameEnd() {
     }
     vid.onended = showButtons;
     vid.onerror = showButtons;
+}
+
+function showDrawHint() {
+    isFirstShape = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    if (dotEls.length < 3) return;
+
+    const FONT_SIZE = 64;
+    const svgRect = svg.getBoundingClientRect();
+    const scaleX = svgRect.width / 400;
+    const scaleY = svgRect.height / 400;
+
+    // İlk 4 noktanın ekran konumları (el parmak ucu için offset)
+    const count = Math.min(4, dotEls.length);
+    const screenDots = dotEls.slice(0, count).map(d => ({
+        x: svgRect.left + d.x * scaleX - FONT_SIZE / 2,
+        y: svgRect.top  + d.y * scaleY - FONT_SIZE * 0.8
+    }));
+
+    const offScreenY = window.innerHeight + 100;
+    const startDot = screenDots[0];
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed; font-size: ${FONT_SIZE}px; pointer-events: none;
+        z-index: 9999; left: 0px; top: 0px;
+        transform: translate(${startDot.x}px, ${offScreenY}px);
+        will-change: transform; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    // Alttan ilk noktaya gel
+    hand.animate([
+        { transform: `translate(${startDot.x}px, ${offScreenY}px)` },
+        { transform: `translate(${startDot.x}px, ${startDot.y}px)` }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+        // Noktalar arası sürekli hareket (çizim simülasyonu)
+        const keyframes = screenDots.map((d, i) => ({
+            transform: `translate(${d.x}px, ${d.y}px)`,
+            offset: i / (screenDots.length - 1)
+        }));
+
+        hand.animate(keyframes, {
+            duration: 1400,
+            easing: 'linear',
+            fill: 'forwards'
+        }).onfinish = () => {
+            const lastDot = screenDots[screenDots.length - 1];
+            hand.animate([
+                { transform: `translate(${lastDot.x}px, ${lastDot.y}px)` },
+                { transform: `translate(${startDot.x}px, ${offScreenY}px)` }
+            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+        };
+    };
 }
 
 // --- TEKRAR SES ---

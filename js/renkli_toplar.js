@@ -11,15 +11,16 @@ const RENKLER = [
 ];
 
 // Ses yolları
-const SND_BASE = 'assets/sounds/renkli_toplar/';
+const SND_BASE = 'assets/sounds/';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
 const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
-let commandOrder = [];   // Karışık sıradaki renk ID'leri
-let currentIdx   = 0;    // Şu anki komut sırası
-let locked       = false; // İşlem sırasında input engelle
+let commandOrder = [];
+let currentIdx   = 0;
+let locked       = false;
 let commandAudio = null;
+let isFirstMove  = true;
 
 function shuffleArray(arr) {
     const a = [...arr];
@@ -77,12 +78,21 @@ function nextCommand() {
     locked = false;
     const renk = RENKLER.find(r => r.id === commandOrder[currentIdx]);
     showCommand(renk);
-    setTimeout(() => playCommandAudio(renk), 300);
+    setTimeout(() => {
+        playCommandAudio(renk);
+        if (isFirstMove) {
+            commandAudio.onended = () => {
+                commandAudio.onended = null;
+                showBallDragHint(renk);
+            };
+        }
+    }, 300);
 }
 
 // --- DOĞRU TOP ---
 function onCorrectDrop(ball) {
     locked = true;
+    ball.style.opacity = '';   // inline stili temizle, .placed sınıfı çalışsın
     ball.classList.add('placed');
 
     SND_ONAY.cloneNode().play();
@@ -102,25 +112,110 @@ function onWrongDrop(ball) {
     SND_DAT.cloneNode().play();
     ball.classList.add('shake');
 
-    // Hata sesi: "Hayır bu top [renk]"
     const wrongId = ball.dataset.id;
-    setTimeout(() => {
-        const errAudio = new Audio(`${SND_BASE}hayir_${wrongId}.mp3`);
-        errAudio.play().catch(() => {});
-    }, 300);
+    const errAudio = new Audio(`${SND_BASE}hayir_${wrongId}.mp3`);
+    setTimeout(() => errAudio.play().catch(() => {}), 300);
 
     setTimeout(() => {
         ball.classList.remove('shake');
         locked = false;
+        const renk = RENKLER.find(r => r.id === commandOrder[currentIdx]);
+        if (!renk) return;
+        // Düzeltme sesi bittikten sonra el göster
+        if (errAudio.ended || errAudio.paused) {
+            showBallDragHint(renk);
+        } else {
+            errAudio.addEventListener('ended', () => showBallDragHint(renk), { once: true });
+        }
     }, 900);
+}
+
+function showBallDragHint(renk) {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const ball = document.querySelector(`.ball[data-id="${renk.id}"]`);
+    const basket = document.getElementById('basket-drop');
+    if (!ball || !basket) return;
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2 - FONT_SIZE / 2,
+            y: rect.top + rect.height * 0.3
+        };
+    }
+
+    const src = getPos(ball);
+    const tgt = getPos(basket);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${src.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    // Gir
+    hand.animate([
+        { transform: `translate(${src.x}px, ${offScreenY}px)` },
+        { transform: `translate(${src.x}px, ${src.y}px)` }
+    ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+        // Bas
+        hand.animate([
+            { transform: `translate(${src.x}px, ${src.y}px)`, easing: 'ease-in' },
+            { transform: `translate(${src.x}px, ${src.y + 20}px)`, easing: 'ease-out' },
+            { transform: `translate(${src.x}px, ${src.y}px)` }
+        ], { duration: 350, fill: 'forwards' }).onfinish = () => {
+
+            setTimeout(() => {
+                // Sürükle
+                hand.animate([
+                    { transform: `translate(${src.x}px, ${src.y}px)` },
+                    { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                ], { duration: 500, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                    // Bırak
+                    hand.animate([
+                        { transform: `translate(${tgt.x}px, ${tgt.y}px)`, easing: 'ease-in' },
+                        { transform: `translate(${tgt.x}px, ${tgt.y + 20}px)`, easing: 'ease-out' },
+                        { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                    ], { duration: 300, fill: 'forwards' }).onfinish = () => {
+
+                        hand.animate([
+                            { transform: `translate(${tgt.x}px, ${tgt.y}px)` },
+                            { transform: `translate(${src.x}px, ${offScreenY}px)` }
+                        ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+                    };
+                };
+            }, 200);
+        };
+    };
 }
 
 // --- DRAG EVENTS (Mouse) ---
 let draggedBallId = null;
 
 function onDragStart(e) {
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
     draggedBallId = e.target.dataset.id;
-    setTimeout(() => e.target.style.opacity = '0.5', 0);
+    setTimeout(() => e.target.style.opacity = '0', 0);
 }
 
 document.addEventListener('dragend', e => {
@@ -143,7 +238,7 @@ basket.addEventListener('drop', e => {
 
     const ball = document.querySelector(`.ball[data-id="${draggedBallId}"]`);
     if (!ball || ball.classList.contains('placed')) return;
-    ball.style.opacity = '1';
+    ball.style.opacity = '';
 
     const expected = commandOrder[currentIdx];
     if (draggedBallId === expected) {
@@ -161,14 +256,21 @@ function addTouchSupport(ball) {
     ball.addEventListener('touchstart', e => {
         e.preventDefault();
         if (locked || ball.classList.contains('placed')) return;
+        const existingHand = document.getElementById('hand-hint');
+        if (existingHand) existingHand.remove();
         _activeBall = ball;
-        ball.style.opacity = '0.5';
+        ball.style.opacity = '0';
 
-        _clone = ball.cloneNode(true);
+        const _bg     = ball.style.background;
+        const _border = ball.style.border;
+        _clone = document.createElement('div');
         _clone.style.cssText = `
-            position:fixed; pointer-events:none; opacity:0.85; z-index:9999;
+            position:fixed; pointer-events:none; opacity:0.92; z-index:9999;
             width:${ball.offsetWidth}px; height:${ball.offsetHeight}px;
             border-radius:50%; transform:scale(1.1);
+            background:${_bg};
+            box-shadow:2px 4px 12px rgba(0,0,0,0.35);
+            ${_border ? 'border:' + _border + ';' : ''}
         `;
         document.body.appendChild(_clone);
     }, { passive: false });
@@ -193,7 +295,7 @@ function addTouchSupport(ball) {
         if (!_activeBall) return;
         const b = _activeBall;
         _activeBall = null;
-        b.style.opacity = '1';
+        b.style.opacity = '';
         if (locked || b.classList.contains('placed')) return;
 
         const t = ev.changedTouches[0];

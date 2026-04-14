@@ -5,7 +5,7 @@
 //  Koordinatlar 260x260 viewBox içindir.
 // ============================================================
 
-const SND_BASE = 'assets/sounds/yapboz/';
+const SND_BASE = 'assets/sounds/';
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
 const SND_DAT  = new Audio('assets/sounds/dat.mp3');
@@ -16,62 +16,50 @@ const SHAPES = [
     {
         id: 'ucgen', label: 'Üçgen', color: '#f59e0b',
         completionAudio: 'ucgen_tamam.mp3',
+        // 3 parça: merkezden her köşeye
         pieces: [
-            { id: 'p1', path: 'M130,20 L240,230 L130,230 Z', label: 'Sağ' },
-            { id: 'p2', path: 'M130,20 L130,230 L20,230 Z',  label: 'Sol' }
+            { id: 'p1', path: 'M130,160 L130,20 L240,230 Z',  label: 'Sağ' },
+            { id: 'p2', path: 'M130,160 L240,230 L20,230 Z',  label: 'Alt' },
+            { id: 'p3', path: 'M130,160 L20,230 L130,20 Z',   label: 'Sol' }
         ]
     },
     {
         id: 'kare', label: 'Kare', color: '#3b82f6',
         completionAudio: 'kare_tamam.mp3',
+        // 3 yatay şerit
         pieces: [
-            { id: 'p1', path: 'M30,30 L230,30 L230,130 L30,130 Z', label: 'Üst' },
-            { id: 'p2', path: 'M30,130 L230,130 L230,230 L30,230 Z', label: 'Alt' },
+            { id: 'p1', path: 'M30,30 L230,30 L230,110 L30,110 Z',  label: 'Üst' },
+            { id: 'p2', path: 'M30,110 L230,110 L230,170 L30,170 Z', label: 'Orta' },
+            { id: 'p3', path: 'M30,170 L230,170 L230,230 L30,230 Z', label: 'Alt' }
         ]
     },
     {
         id: 'kalp', label: 'Kalp', color: '#ec4899',
         completionAudio: 'kalp_tamam.mp3',
+        // Sol yarım kalp, sağ yarım kalp
         pieces: [
-            // Sol yarım kalp
             { id: 'p1', path: 'M130,220 C60,170 10,120 10,80 C10,45 40,20 75,20 C100,20 120,35 130,55 L130,220 Z', label: 'Sol' },
-            // Sağ yarım kalp
             { id: 'p2', path: 'M130,220 C200,170 250,120 250,80 C250,45 220,20 185,20 C160,20 140,35 130,55 L130,220 Z', label: 'Sağ' }
         ]
     },
     {
         id: 'yildiz', label: 'Yıldız', color: '#eab308',
         completionAudio: 'yildiz_tamam.mp3',
-        // Yıldızı 2 parçaya böl: üst 3 köşe + alt 2 köşe (merkez dahil)
-        pieces: (function() {
-            function starPoint(i, outer) {
-                const angle = (i * Math.PI / 5) - Math.PI / 2;
-                const r = outer ? 120 : 50;
-                return { x: Math.round(130 + r * Math.cos(angle)), y: Math.round(130 + r * Math.sin(angle)) };
-            }
-            // 5 dış köşe + 5 iç köşe alternatif
-            const pts = [];
-            for (let i = 0; i < 10; i++) {
-                pts.push(starPoint(i, i % 2 === 0));
-            }
-            const all = pts.map(p => `${p.x},${p.y}`).join(' ');
-            // Üst yarı (köşe 0,1,2,3,4 + iç noktalar)
-            const topPath = `M${pts[0].x},${pts[0].y} L${pts[1].x},${pts[1].y} L${pts[2].x},${pts[2].y} L${pts[3].x},${pts[3].y} L${pts[4].x},${pts[4].y} L${pts[5].x},${pts[5].y} L130,130 L${pts[9].x},${pts[9].y} Z`;
-            const botPath = `M${pts[5].x},${pts[5].y} L${pts[6].x},${pts[6].y} L${pts[7].x},${pts[7].y} L${pts[8].x},${pts[8].y} L${pts[9].x},${pts[9].y} L130,130 Z`;
-            return [
-                { id: 'p1', path: topPath, label: 'Üst' },
-                { id: 'p2', path: botPath, label: 'Alt' }
-            ];
-        })()
+        // 3 parça merkezden: üst-sağ (2 uç), alt (2 uç), sol (1 uç)
+        pieces: [
+            { id: 'p1', path: 'M130,130 L101,90 L130,10 L159,90 L244,93 L178,146 Z',          label: 'Üst-Sağ' },
+            { id: 'p2', path: 'M130,130 L178,146 L201,227 L130,180 L60,227 L82,146 Z',         label: 'Alt' },
+            { id: 'p3', path: 'M130,130 L82,146 L16,93 L101,90 Z',                             label: 'Sol' }
+        ]
     },
     {
         id: 'daire', label: 'Daire', color: '#22c55e',
         completionAudio: 'daire_tamam.mp3',
+        // 3 eşit dilim (120° × 3), merkezden
         pieces: [
-            // Sol yarım daire
-            { id: 'p1', path: 'M130,20 A110,110 0 0,0 130,240 Z', label: 'Sol' },
-            // Sağ yarım daire
-            { id: 'p2', path: 'M130,20 A110,110 0 0,1 130,240 Z', label: 'Sağ' }
+            { id: 'p1', path: 'M130,130 L130,20 A110,110 0 0,1 225,185 Z',  label: 'Sağ-Üst' },
+            { id: 'p2', path: 'M130,130 L225,185 A110,110 0 0,1 35,185 Z',  label: 'Alt' },
+            { id: 'p3', path: 'M130,130 L35,185 A110,110 0 0,1 130,20 Z',   label: 'Sol-Üst' }
         ]
     }
 ];
@@ -80,6 +68,7 @@ let currentShapeIdx = 0;
 let placedCount = 0;
 let locked = false;
 let draggedPieceId = null;
+let isFirstMove = true;
 let _touchClone = null;
 let _touchPieceEl = null;
 let instructionAudio = null;
@@ -148,17 +137,24 @@ function renderShape(idx) {
         `;
 
         wrapper.addEventListener('dragstart', e => {
+            const existingHand = document.getElementById('hand-hint');
+            if (existingHand) existingHand.remove();
             draggedPieceId = piece.id;
             setTimeout(() => wrapper.style.opacity = '0.5', 0);
         });
-        wrapper.addEventListener('dragend', () => { wrapper.style.opacity = '1'; });
+        wrapper.addEventListener('dragend', () => { wrapper.style.opacity = ''; });
         addTouchSupport(wrapper, piece.id);
 
         pool.appendChild(wrapper);
     });
 
     // Komut sesi
-    setTimeout(() => playAudio(`${SND_BASE}yapboz_komut.mp3`), 400);
+    setTimeout(() => {
+        const a = playAudio(`${SND_BASE}yapboz_komut.mp3`);
+        if (isFirstMove) {
+            a.onended = () => showPuzzleDragHint();
+        }
+    }, 400);
 }
 
 // --- SLOT'A BIRAK ---
@@ -221,7 +217,10 @@ function onWrongPlace(pieceId) {
     if (wrapper) {
         wrapper.classList.add('shake');
         wrapper.style.opacity = '1';
-        setTimeout(() => wrapper.classList.remove('shake'), 500);
+        setTimeout(() => {
+            wrapper.classList.remove('shake');
+            showPuzzleDragHint();
+        }, 500);
     }
 }
 
@@ -230,6 +229,8 @@ function addTouchSupport(wrapper, pieceId) {
     wrapper.addEventListener('touchstart', e => {
         e.preventDefault();
         if (locked || wrapper.classList.contains('placed')) return;
+        const existingHand = document.getElementById('hand-hint');
+        if (existingHand) existingHand.remove();
         _touchPieceEl = wrapper;
         wrapper.style.opacity = '0.5';
 
@@ -265,7 +266,7 @@ function addTouchSupport(wrapper, pieceId) {
         if (!_touchPieceEl) return;
         const w = _touchPieceEl;
         _touchPieceEl = null;
-        w.style.opacity = '1';
+        w.style.opacity = '';
         if (locked || w.classList.contains('placed')) return;
 
         const t = ev.changedTouches[0];
@@ -281,6 +282,82 @@ function addTouchSupport(wrapper, pieceId) {
             onWrongPlace(pieceId);
         }
     });
+}
+
+function showPuzzleDragHint() {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const firstPiece = pool.querySelector('.piece-wrapper:not(.placed)');
+    if (!firstPiece) return;
+    const pieceId = firstPiece.dataset.pieceId;
+    const slot = targetSvg.querySelector(`.slot[data-piece-id="${pieceId}"]`);
+    if (!slot) return;
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2 - FONT_SIZE / 2,
+            y: rect.top + rect.height * 0.3
+        };
+    }
+
+    const src = getPos(firstPiece);
+    const tgt = getPos(slot);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${src.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    hand.animate([
+        { transform: `translate(${src.x}px, ${offScreenY}px)` },
+        { transform: `translate(${src.x}px, ${src.y}px)` }
+    ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+        hand.animate([
+            { transform: `translate(${src.x}px, ${src.y}px)`, easing: 'ease-in' },
+            { transform: `translate(${src.x}px, ${src.y + 20}px)`, easing: 'ease-out' },
+            { transform: `translate(${src.x}px, ${src.y}px)` }
+        ], { duration: 350, fill: 'forwards' }).onfinish = () => {
+
+            setTimeout(() => {
+                hand.animate([
+                    { transform: `translate(${src.x}px, ${src.y}px)` },
+                    { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                ], { duration: 600, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                    hand.animate([
+                        { transform: `translate(${tgt.x}px, ${tgt.y}px)`, easing: 'ease-in' },
+                        { transform: `translate(${tgt.x}px, ${tgt.y + 20}px)`, easing: 'ease-out' },
+                        { transform: `translate(${tgt.x}px, ${tgt.y}px)` }
+                    ], { duration: 300, fill: 'forwards' }).onfinish = () => {
+
+                        hand.animate([
+                            { transform: `translate(${tgt.x}px, ${tgt.y}px)` },
+                            { transform: `translate(${src.x}px, ${offScreenY}px)` }
+                        ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+                    };
+                };
+            }, 200);
+        };
+    };
 }
 
 // --- OYUN SONU ---

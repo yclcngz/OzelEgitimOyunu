@@ -22,6 +22,7 @@ const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
+let isFirstMove = true;
 
 // Hafıza Oyunu Değişkenleri
 let hasFlippedCard = false;
@@ -72,6 +73,7 @@ function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
+    isFirstMove = true;
     renderStage();
 }
 
@@ -105,14 +107,23 @@ function renderStage() {
         memoryBoard.appendChild(cardElement);
     });
 
-    if (currentStageIndex === 0) {
-        setTimeout(() => playInstructionAudio(), 500);
-    }
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showCardHint(1);
+            };
+        }
+    }, 500);
 }
 
 function flipCard() {
     if (lockBoard) return;
     if (this === firstCard) return;
+
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     this.classList.add('flipped');
 
@@ -166,6 +177,7 @@ function unflipCards() {
         firstCard.classList.remove('flipped');
         secondCard.classList.remove('flipped');
         resetBoard();
+        showCardHint(1);
     }, 1000);
 }
 
@@ -180,6 +192,117 @@ function playInstructionAudio() {
 }
 
 document.getElementById('play-audio-btn').addEventListener('click', playInstructionAudio);
+
+function showCardHint(totalRounds = 3) {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    // Henüz açılmamış eşleşen iki kart bul
+    const unflipped = [...document.querySelectorAll('.memory-card:not(.flipped)')];
+    if (unflipped.length < 2) return;
+
+    const cardA = unflipped[0];
+    const targetId = cardA.dataset.id;
+    const cardB = unflipped.find((c, i) => i > 0 && c.dataset.id === targetId);
+    if (!cardB) return;
+
+    const FONT_SIZE = 72;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x:     rect.left + rect.width  / 2 - FONT_SIZE / 2,
+            tapY:  rect.top  + rect.height * 0.3,
+            restY: rect.top  + rect.height * 0.3 + 90
+        };
+    }
+
+    const posA = getPos(cardA);
+    const posB = getPos(cardB);
+    const offScreenY = window.innerHeight + 100;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(${posA.x}px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let round = 0;
+
+    function doRound() {
+        round++;
+
+        // Ekranda görünmez yerden ilk karta in
+        hand.animate([
+            { transform: `translate(${posA.x}px, ${offScreenY}px)` },
+            { transform: `translate(${posA.x}px, ${posA.restY}px)` }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+            // İlk karta vur
+            hand.animate([
+                { transform: `translate(${posA.x}px, ${posA.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                { transform: `translate(${posA.x}px, ${posA.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                { transform: `translate(${posA.x}px, ${posA.restY}px)` }
+            ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                // İlk kart açılır → hayvan görünür
+                cardA.classList.add('flipped');
+
+                setTimeout(() => {
+                    // İkinci karta geç
+                    hand.animate([
+                        { transform: `translate(${posA.x}px, ${posA.restY}px)` },
+                        { transform: `translate(${posB.x}px, ${posB.restY}px)` }
+                    ], { duration: 380, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                        // İkinci karta vur
+                        hand.animate([
+                            { transform: `translate(${posB.x}px, ${posB.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                            { transform: `translate(${posB.x}px, ${posB.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                            { transform: `translate(${posB.x}px, ${posB.restY}px)` }
+                        ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                            // İkinci kart açılır → aynı hayvan görünür
+                            cardB.classList.add('flipped');
+
+                            // Kısa bekleme → her iki kart da kapanır
+                            setTimeout(() => {
+                                cardA.classList.remove('flipped');
+                                cardB.classList.remove('flipped');
+
+                                // El ekrandan çıkar
+                                hand.animate([
+                                    { transform: `translate(${posB.x}px, ${posB.restY}px)` },
+                                    { transform: `translate(${posA.x}px, ${offScreenY}px)` }
+                                ], { duration: 380, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                                    if (round < totalRounds) {
+                                        setTimeout(doRound, 250);
+                                    } else {
+                                        hand.remove();
+                                    }
+                                };
+                            }, 800);
+                        };
+                    };
+                }, 150);
+            };
+        };
+    }
+
+    doRound();
+}
 
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');

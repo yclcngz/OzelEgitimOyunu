@@ -19,9 +19,10 @@ const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
 
-let currentLevelNumber = 1; 
-let currentStages = [];     
-let currentStageIndex = 0;  
+let currentLevelNumber = 1;
+let currentStages = [];
+let currentStageIndex = 0;
+let isFirstMove = true;
 
 // Hafıza Oyunu Değişkenleri
 let hasFlippedCard = false;
@@ -73,6 +74,7 @@ function startLevel(levelNumber) {
     currentLevelNumber = levelNumber;
     currentStageIndex = 0;
     currentStages = generateStagesForLevel(levelNumber);
+    if (levelNumber === 1) isFirstMove = true;
     renderStage();
 }
 
@@ -108,12 +110,23 @@ function renderStage() {
         memoryBoard.appendChild(cardElement);
     });
 
-    setTimeout(() => playInstructionAudio(), 500);
+    setTimeout(() => {
+        playInstructionAudio();
+        if (isFirstMove) {
+            audioInstruction.onended = () => {
+                audioInstruction.onended = null;
+                showCardHint(3);
+            };
+        }
+    }, 500);
 }
 
 function flipCard() {
     if (lockBoard) return;
     if (this === firstCard) return; // Aynı karta çift tıklamayı engelle
+
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     this.classList.add('flipped');
 
@@ -164,14 +177,15 @@ function disableCards() {
 }
 
 function unflipCards() {
-    lockBoard = true; // Dönme işlemi bitene kadar diğer kartlara tıklanmasın
-    audioDat.cloneNode().play(); // Hata sesi (İsteğe bağlı, istersen bu satırı silebilirsin)
+    lockBoard = true;
+    audioDat.cloneNode().play();
 
     setTimeout(() => {
         firstCard.classList.remove('flipped');
         secondCard.classList.remove('flipped');
         resetBoard();
-    }, 1000); // 1 saniye kartları açık tutup geri kapatır
+        showCardHint(1);
+    }, 1000);
 }
 
 function resetBoard() {
@@ -185,6 +199,107 @@ function playInstructionAudio() {
 }
 
 document.getElementById('play-audio-btn').addEventListener('click', playInstructionAudio);
+
+function showCardHint(totalRounds = 1) {
+    isFirstMove = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    const cards = [...document.querySelectorAll('.memory-card:not(.flipped)')];
+    if (cards.length < 2) return;
+
+    // Eşleşen çifti bul
+    let card1 = null, card2 = null;
+    for (let i = 0; i < cards.length; i++) {
+        const match = cards.find((c, idx) => idx !== i && c.dataset.id === cards[i].dataset.id);
+        if (match) { card1 = cards[i]; card2 = match; break; }
+    }
+    if (!card1 || !card2) return;
+
+    const FONT_SIZE = 72;
+    const offScreenY = window.innerHeight + 100;
+
+    function getPos(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            x:    rect.left + rect.width / 2 - FONT_SIZE / 2,
+            tapY: rect.top + rect.height * 0.3,
+            restY: rect.top + rect.height * 0.3 + 90
+        };
+    }
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed;
+        font-size: ${FONT_SIZE}px;
+        pointer-events: none;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        transform: translate(0px, ${offScreenY}px);
+        will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let round = 0;
+
+    function startRound() {
+        if (round >= totalRounds) { hand.remove(); return; }
+        round++;
+
+        const p1 = getPos(card1);
+        const p2 = getPos(card2);
+
+        // 1) Kart1'e giriş
+        hand.animate([
+            { transform: `translate(${p1.x}px, ${offScreenY}px)` },
+            { transform: `translate(${p1.x}px, ${p1.restY}px)` }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+
+            // 2) Kart1'e dokun
+            hand.animate([
+                { transform: `translate(${p1.x}px, ${p1.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                { transform: `translate(${p1.x}px, ${p1.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                { transform: `translate(${p1.x}px, ${p1.restY}px)` }
+            ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                setTimeout(() => {
+                    // 3) Kart2'ye kaydır
+                    hand.animate([
+                        { transform: `translate(${p1.x}px, ${p1.restY}px)` },
+                        { transform: `translate(${p2.x}px, ${p2.restY}px)` }
+                    ], { duration: 500, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
+
+                        // 4) Kart2'ye dokun
+                        hand.animate([
+                            { transform: `translate(${p2.x}px, ${p2.restY}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+                            { transform: `translate(${p2.x}px, ${p2.tapY}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+                            { transform: `translate(${p2.x}px, ${p2.restY}px)` }
+                        ], { duration: 500, fill: 'forwards' }).onfinish = () => {
+
+                            // 5) Çıkış → sonraki tur veya bitir
+                            setTimeout(() => {
+                                hand.animate([
+                                    { transform: `translate(${p2.x}px, ${p2.restY}px)` },
+                                    { transform: `translate(${p2.x}px, ${offScreenY}px)` }
+                                ], { duration: 350, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+                                    if (round < totalRounds) setTimeout(startRound, 300);
+                                    else hand.remove();
+                                };
+                            }, 280);
+                        };
+                    };
+                }, 200);
+            };
+        };
+    }
+
+    startRound();
+}
 
 function showLevelCompleteCelebration() {
     const overlay = document.getElementById('celebration-overlay');

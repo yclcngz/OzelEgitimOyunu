@@ -1,21 +1,15 @@
 const allAnimals = [
-    { id: "kedi",   name: "Kedi" },
-    { id: "kopek",  name: "Köpek" },
-    { id: "kus",    name: "Kuş" },
-    { id: "at",     name: "At" },
-    { id: "inek",   name: "İnek" },
-    { id: "koyun",  name: "Koyun" },
-    { id: "tavsan", name: "Tavşan" },
-    { id: "ayi",    name: "Ayı" },
-    { id: "aslan",  name: "Aslan" },
-    { id: "fil",    name: "Fil" },
-    { id: "zebra",  name: "Zebra" },
-    { id: "zurafa", name: "Zürafa" },
-    { id: "maymun", name: "Maymun" },
-    { id: "kaplan", name: "Kaplan" },
-    { id: "kurt",   name: "Kurt" },
-    { id: "tilki",  name: "Tilki" },
-    { id: "sincap", name: "Sincap" }
+    { id: "kedi",    name: "Kedi" },
+    { id: "kopek",   name: "Köpek" },
+    { id: "kus",     name: "Kuş" },
+    { id: "at",      name: "At" },
+    { id: "inek",    name: "İnek" },
+    { id: "koyun",   name: "Koyun" },
+    { id: "maymun",  name: "Maymun" },
+    { id: "kurt",    name: "Kurt" },
+    { id: "tavuk",   name: "Tavuk" },
+    { id: "kurbaga", name: "Kurbağa" },
+    { id: "esek",    name: "Eşek" }
 ];
 
 function shuffleArray(arr) {
@@ -48,6 +42,8 @@ let currentStageIdx = 0;
 let currentAudio = null;
 let currentListenCard = null;
 let quizLocked = false;
+let isFirstListen = true;
+let isFirstQuiz = true;
 
 // --- YARDIMCI ---
 function stopCurrentAudio() {
@@ -59,15 +55,17 @@ function stopCurrentAudio() {
     }
 }
 
-function playAnimalSoundTimes(animalId, timesLeft) {
-    if (timesLeft <= 0) return;
+function playAnimalSoundTimes(animalId, timesLeft, onComplete) {
+    if (timesLeft <= 0) { if (onComplete) onComplete(); return; }
     const audio = new Audio(`assets/sounds/hayvan sesleri/${animalId}_ses.mp3`);
     currentAudio = audio;
     audio.play().catch(() => {});
     audio.onended = () => {
         currentAudio = null;
         if (timesLeft > 1) {
-            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1), 500);
+            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1, onComplete), 500);
+        } else {
+            if (onComplete) onComplete();
         }
     };
 }
@@ -77,6 +75,8 @@ function renderStage() {
     stopCurrentAudio();
     if (currentListenCard) { currentListenCard.classList.remove('playing'); currentListenCard = null; }
     quizLocked = false;
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     const stage = allStages[currentStageIdx];
 
@@ -120,7 +120,10 @@ function renderListenStage(stage) {
     // Komut sesini çal
     setTimeout(() => {
         const cmdAudio = new Audio('assets/sounds/hayvan_sesleri_komut.mp3');
-        cmdAudio.play().catch(() => {});
+        cmdAudio.play().catch(() => { if (isFirstListen) showListenHint(); });
+        if (isFirstListen) {
+            cmdAudio.onended = () => showListenHint();
+        }
     }, 500);
 
     let listenedCount = 0;

@@ -7,7 +7,6 @@ const allAnimals = [
     { id: "koyun",   name: "Koyun" },
     { id: "maymun",  name: "Maymun" },
     { id: "kurt",    name: "Kurt" },
-    { id: "sincap",  name: "Sincap" },
     { id: "tavuk",   name: "Tavuk" },
     { id: "kurbaga", name: "Kurbağa" },
     { id: "esek",    name: "Eşek" }
@@ -22,7 +21,7 @@ function shuffleArray(arr) {
     return a;
 }
 
-// 3 dinle aşaması + 12 quiz aşaması = 15 toplam
+// 3 dinle aşaması + 11 quiz aşaması = 14 toplam
 const listenStages = [
     { type: 'listen', animals: allAnimals.slice(0, 4) },
     { type: 'listen', animals: allAnimals.slice(4, 8) },
@@ -43,6 +42,7 @@ let currentStageIdx = 0;
 let currentAudio = null;
 let currentListenCard = null;
 let quizLocked = false;
+let isFirstQuiz = true;
 
 // --- YARDIMCI ---
 function stopCurrentAudio() {
@@ -54,15 +54,17 @@ function stopCurrentAudio() {
     }
 }
 
-function playAnimalSoundTimes(animalId, timesLeft) {
-    if (timesLeft <= 0) return;
+function playAnimalSoundTimes(animalId, timesLeft, onComplete) {
+    if (timesLeft <= 0) { if (onComplete) onComplete(); return; }
     const audio = new Audio(`assets/sounds/hayvan sesleri/${animalId}_ses.mp3`);
     currentAudio = audio;
     audio.play().catch(() => {});
     audio.onended = () => {
         currentAudio = null;
         if (timesLeft > 1) {
-            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1), 500);
+            setTimeout(() => playAnimalSoundTimes(animalId, timesLeft - 1, onComplete), 500);
+        } else {
+            if (onComplete) onComplete();
         }
     };
 }
@@ -163,13 +165,22 @@ function renderQuizStage(stage) {
 
         // Soru komutu → hayvan sesi x3
     const cmdAudio = new Audio('assets/sounds/kimin_sesi.mp3');
-    cmdAudio.play().catch(() => playAnimalSoundTimes(stage.correct.id, 3));
-    cmdAudio.onended = () => playAnimalSoundTimes(stage.correct.id, 3);
+    const afterSounds = () => {
+        if (isFirstQuiz) {
+            playAnimalSoundTimes(stage.correct.id, 3, () => showQuizHint(stage.correct.id, 3));
+        } else {
+            playAnimalSoundTimes(stage.correct.id, 3);
+        }
+    };
+    cmdAudio.play().catch(afterSounds);
+    cmdAudio.onended = afterSounds;
 }
 
 // --- ŞIIK SEÇİMİ ---
 function handleChoice(chosen, correct, card) {
     if (quizLocked) return;
+    const existingHand = document.getElementById('hand-hint');
+    if (existingHand) existingHand.remove();
 
     if (chosen.id === correct.id) {
         quizLocked = true;
@@ -198,7 +209,60 @@ function handleChoice(chosen, correct, card) {
         setTimeout(() => {
             card.classList.remove('wrong');
             quizLocked = false;
+            showQuizHint(correct.id, 1);
         }, 1000);
+    }
+}
+
+function showQuizHint(correctId, totalTaps = 3) {
+    isFirstQuiz = false;
+
+    const existing = document.getElementById('hand-hint');
+    if (existing) existing.remove();
+
+    // Quiz kartlarından doğru olanı bul
+    const cards = [...document.querySelectorAll('#choices-grid .choice-card')];
+    const targetCard = cards.find(c => c.querySelector('img') && c.querySelector('img').src.includes(correctId));
+    if (!targetCard) return;
+
+    const rect = targetCard.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const tapTop  = rect.top + rect.height * 0.3;
+    const restTop = tapTop + 90;
+    const offScreenTop = window.innerHeight + 100;
+    const FONT_SIZE = 72;
+
+    const hand = document.createElement('div');
+    hand.id = 'hand-hint';
+    hand.innerHTML = '👆';
+    hand.style.cssText = `
+        position: fixed; font-size: ${FONT_SIZE}px; pointer-events: none;
+        z-index: 9999; left: ${centerX - FONT_SIZE / 2}px; top: 0px;
+        transform: translateY(${offScreenTop}px); will-change: transform;
+        filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    `;
+    document.body.appendChild(hand);
+
+    let tapCount = 0;
+    hand.animate([
+        { transform: `translateY(${offScreenTop}px)` },
+        { transform: `translateY(${restTop}px)` }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' }).onfinish = doTap;
+
+    function doTap() {
+        if (tapCount >= totalTaps) {
+            hand.animate([
+                { transform: `translateY(${restTop}px)` },
+                { transform: `translateY(${offScreenTop}px)` }
+            ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+            return;
+        }
+        tapCount++;
+        hand.animate([
+            { transform: `translateY(${restTop}px)`, easing: 'cubic-bezier(0.4,0,1,1)' },
+            { transform: `translateY(${tapTop}px)`,  easing: 'cubic-bezier(0,0,0.6,1)' },
+            { transform: `translateY(${restTop}px)` }
+        ], { duration: 550, fill: 'forwards' }).onfinish = () => setTimeout(doTap, 280);
     }
 }
 
