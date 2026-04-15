@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ulaşım Araçlarını Tanıyalım</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/sw-register.js" defer></script>
+    <style>
+        .ulasim-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px 20px;
+        }
+
+        .vehicle-label {
+            font-size: clamp(22px, 6vw, 36px);
+            font-weight: 800;
+            color: #1e40af;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .prog-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .prog-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: background 0.3s;
+        }
+
+        .prog-dot.active { background: #3b82f6; }
+        .prog-dot.done   { background: #22c55e; }
+
+        /* ---- Puzzle Grid ---- */
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            width: min(76vw, 360px);
+            height: min(76vw, 360px);
+            gap: 4px;
+            padding: 4px;
+            background: #3b82f6;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(59,130,246,.35);
+        }
+
+        .puzzle-slot {
+            background: rgba(255,255,255,0.18);
+            border: 3px dashed rgba(255,255,255,0.7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: rgba(255,255,255,0.6);
+            cursor: default;
+            transition: background 0.15s;
+            background-repeat: no-repeat;
+        }
+
+        .puzzle-slot.drag-over {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .puzzle-slot.filled {
+            border: none;
+            background-size: 200% 200% !important;
+        }
+
+        /* ---- Pieces Pool ---- */
+        .puzzle-pool {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: min(76vw, 360px);
+        }
+
+        .puzzle-piece {
+            width: 100%;
+            aspect-ratio: 1;
+            background-size: 200% 200%;
+            background-repeat: no-repeat;
+            border-radius: 10px;
+            border: 3px solid #3b82f6;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.3s;
+            touch-action: none;
+        }
+
+        .puzzle-piece:active { cursor: grabbing; transform: scale(1.04); }
+
+        .puzzle-piece.placed {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        .puzzle-piece.shake {
+            animation: puzzleShake 0.45s ease;
+        }
+
+        @keyframes puzzleShake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🤩👏</div>
+    </div>
+
+    <div class="carousel-header">
+        <a href="nesneler_menu.html" class="back-btn-carousel">⬅</a>
+    </div>
+
+    <div class="ulasim-wrapper">
+        <div id="vehicle-label" class="vehicle-label"></div>
+        <div id="progress-bar" class="prog-bar"></div>
+        <div id="target-grid" class="puzzle-grid"></div>
+        <div id="pieces-pool" class="puzzle-pool"></div>
+    </div>
+
+    <script src="js/ulasim_game.js"></script>
+    <script src="js/common_bgm.js"></script>
+</body>
+</html>

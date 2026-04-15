@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v63';
+const CACHE_NAME = 'egitim-oyunu-v70';
 
 const CORE_ASSETS = [
   './index.html',
@@ -40,7 +40,9 @@ const CORE_ASSETS = [
   './js/noktalari_birlestir.js',
   './js/yapboz.js',
   './js/hayvan_eslestirme.js',
-  './js/hayvan_bulmaca.js'
+  './js/hayvan_bulmaca.js',
+  './ulasim_taniyalim.html',
+  './js/ulasim_game.js'
 ];
 
 self.addEventListener('install', event => {
