@@ -33,7 +33,7 @@ const audioHafizaKomut = new Audio('assets/sounds/giysiler_hafiza_komut.mp3');
 const audioOnay = new Audio('assets/sounds/onay.mp3');
 const audioDat  = new Audio('assets/sounds/dat.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
-const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 
 let currentLevel = 1;
 let isFirstMove = true;

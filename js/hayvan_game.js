@@ -21,7 +21,7 @@ const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioConfetti = new Audio('assets/sounds/konfeti.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
-const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 let currentQuestionAudio = null;
 
 // Konfeti Fonksiyonu

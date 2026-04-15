@@ -962,44 +962,6 @@ body.carousel-page {
 }
 
 /* --- GELİŞTİRİCİ TEST MENÜSÜ (Geçici) --- */
-.dev-menu {
-    display: none;
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    background: rgba(0, 0, 0, 0.7);
-    /* Yarı saydam siyah arka plan */
-    color: white;
-    padding: 10px 15px;
-    border-radius: 10px;
-    z-index: 9999;
-    /* Her şeyin en üstünde dursun */
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-family: sans-serif;
-}
-
-.dev-menu span {
-    font-weight: bold;
-    margin-right: 5px;
-}
-
-.dev-menu button {
-    background: #e74c3c;
-    /* Dikkat çekici kırmızı butonlar */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-}
-
-.dev-menu button:hover {
-    background: #c0392b;
-}
 
 /* --- MEYVE BULMACASI (HAFIZA OYUNU) STİLLERİ --- */
 .memory-board {

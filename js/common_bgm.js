@@ -87,20 +87,4 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('bgmMuted', '1');
         }
     });
-
-    // --- GELİŞTİRİCİ MENÜSÜ ---
-    setTimeout(() => {
-        if (typeof window.startLevel === 'function') {
-            const devMenu = document.createElement('div');
-            devMenu.className = 'dev-menu';
-            devMenu.style.display = 'flex';
-            let maxOptions = window.MAX_LEVEL || 5;
-            let buttonsHtml = '';
-            for (let i = 1; i <= maxOptions; i++) {
-                buttonsHtml += `<button onclick="window.startLevel(${i})">${i}</button>`;
-            }
-            devMenu.innerHTML = `<span>Hızlı Geçiş:</span> ${buttonsHtml}`;
-            document.body.appendChild(devMenu);
-        }
-    }, 500);
 });

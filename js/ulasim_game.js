@@ -3,7 +3,7 @@
 //  Her araç 4 parçaya (2×2) bölünür, sürükle-bırak ile birleştirilir.
 // ============================================================
 
-const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
 const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 
@@ -400,7 +400,7 @@ function showGameEnd() {
         content.innerHTML = `
             <div class="end-game-buttons">
                 <button class="play-again-btn"   onclick="location.reload()">🔄 Tekrar Oyna</button>
-                <button class="back-to-menu-btn" onclick="window.location.href='nesneler_menu.html#4'">⬅ Menüye Dön</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='nesneler_menu.html#2'">⬅ Menüye Dön</button>
             </div>
         `;
     }

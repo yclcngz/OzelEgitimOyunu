@@ -6,7 +6,7 @@
 // ============================================================
 
 const SND_BASE = 'assets/sounds/';
-const FINALE_VIDEO_SRC = 'assets/sounds/oyun_sonlari_tebrik animasyonu.mp4';
+const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
 const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 

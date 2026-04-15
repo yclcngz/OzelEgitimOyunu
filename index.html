@@ -18,7 +18,7 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen">
-        <video id="splash-video" src="assets/sounds/momo.mp4" autoplay muted playsinline></video>
+        <video id="splash-video" src="assets/sounds/oyun_giriş_animasyonu.mp4" autoplay muted playsinline></video>
         <button id="splash-sound-btn">🔇</button>
     </div>
 
@@ -64,8 +64,6 @@
         (function() {
             const splash = document.getElementById('splash-screen');
             const video = document.getElementById('splash-video');
-            const DURATION = 8000;
-
             function hideSplash() {
                 sessionStorage.setItem('splashSeen', '1');
                 splash.classList.add('fade-out');
@@ -77,8 +75,7 @@
                 splash.classList.add('hidden');
             } else {
                 video.addEventListener('ended', hideSplash);
-                video.addEventListener('error', () => setTimeout(hideSplash, DURATION));
-                setTimeout(hideSplash, DURATION);
+                video.addEventListener('error', () => setTimeout(hideSplash, 500));
             }
 
             // Ses butonu
