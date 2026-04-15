@@ -255,4 +255,12 @@ document.addEventListener('click', () => {
     }
 }, { once: true });
 
-updateUI(0);
+// URL hash varsa o karta git (örn. meyveler_menu.html#1)
+const _hashIdx = parseInt(window.location.hash.slice(1));
+const startIndex = (!isNaN(_hashIdx) && _hashIdx > 0 && _hashIdx < cards.length) ? _hashIdx : 0;
+updateUI(startIndex);
+if (startIndex > 0) {
+    requestAnimationFrame(() => {
+        if (carousel) carousel.scrollLeft = startIndex * carousel.offsetWidth;
+    });
+}

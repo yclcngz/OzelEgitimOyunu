@@ -306,7 +306,7 @@ function showLevelCompleteCelebration() {
             startLevel(currentLevelNumber + 1);
         };
     } else {
-        showFinaleVideo(overlay, content, 'renkler_menu.html');
+        showFinaleVideo(overlay, content, 'renkler_menu.html#2');
     }
 }
 

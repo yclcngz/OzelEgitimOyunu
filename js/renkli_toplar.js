@@ -331,7 +331,7 @@ function showGameEnd() {
         content.innerHTML = `
             <div class="end-game-buttons">
                 <button class="play-again-btn" onclick="location.reload()">🔄 Tekrar Oyna</button>
-                <button class="back-to-menu-btn" onclick="window.location.href='renkler_menu.html'">⬅ Menüye Dön</button>
+                <button class="back-to-menu-btn" onclick="window.location.href='renkler_menu.html#1'">⬅ Menüye Dön</button>
             </div>
         `;
     }

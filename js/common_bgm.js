@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Müzik Kontrol Butonu ---
     const bgmBtn = document.createElement('button');
     bgmBtn.id = 'global-bgm-btn';
-    bgmBtn.innerHTML = '🎵 Müzik';
 
     const slot = document.getElementById('bgm-btn-slot');
     if (slot) {
@@ -17,22 +16,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgmAudio = new Audio(bgmSrc);
     bgmAudio.loop = true;
     bgmAudio.volume = 0.06;
-    
-    let isMuted = false;
+
+    // Sessiz tercihi oturumda kalıcı
+    let isMuted = sessionStorage.getItem('bgmMuted') === '1';
+    bgmBtn.innerHTML = isMuted ? '🔇 Kapalı' : '🎵 Müzik';
+    if (isMuted) bgmBtn.classList.add('muted');
+
+    function tryPlay() {
+        if (!isMuted) bgmAudio.play().catch(() => {});
+    }
 
     // --- Splash ekranı varken butonu gizle ---
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen && !splashScreen.classList.contains('hidden')) {
         bgmBtn.style.display = 'none';
 
-        // Splash kapanınca butonu göster
+        // Splash kapanınca butonu göster ve müziği başlat
         const splashObserver = new MutationObserver(() => {
             if (splashScreen.classList.contains('hidden')) {
                 bgmBtn.style.display = '';
+                tryPlay();
                 splashObserver.disconnect();
             }
         });
         splashObserver.observe(splashScreen, { attributes: true, attributeFilter: ['class'] });
+    } else {
+        // Splash yok (alt menü sayfaları) — hemen çalmayı dene
+        tryPlay();
+        // Autoplay engellendiyse ilk etkileşimde başlat
+        const onFirstInteraction = () => {
+            tryPlay();
+            document.removeEventListener('click', onFirstInteraction);
+            document.removeEventListener('touchstart', onFirstInteraction);
+        };
+        document.addEventListener('click', onFirstInteraction);
+        document.addEventListener('touchstart', onFirstInteraction);
     }
 
     // --- SES KISMA SİSTEMİ (Audio Ducking) ---
@@ -51,17 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return originalAudioPlay.apply(this, args);
     };
 
-    // İlk dokunuşta müziği başlat (tarayıcı autoplay kısıtlaması)
-    const attemptPlay = () => {
-        if (!isMuted) {
-            bgmAudio.play().catch(e => console.log("Autoplay engellendi:", e));
-        }
-        document.removeEventListener('click', attemptPlay);
-        document.removeEventListener('touchstart', attemptPlay);
-    };
-    document.addEventListener('click', attemptPlay);
-    document.addEventListener('touchstart', attemptPlay);
-
     // Müzik Kapat / Aç
     bgmBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -71,11 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
             bgmBtn.classList.remove('muted');
             bgmAudio.play().catch(() => {});
             isMuted = false;
+            sessionStorage.removeItem('bgmMuted');
         } else {
             bgmAudio.pause();
             bgmBtn.innerHTML = '🔇 Kapalı';
             bgmBtn.classList.add('muted');
             isMuted = true;
+            sessionStorage.setItem('bgmMuted', '1');
         }
     });
 

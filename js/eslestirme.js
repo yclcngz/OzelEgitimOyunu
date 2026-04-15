@@ -234,7 +234,7 @@ function showLevelCompleteCelebration() {
             startLevel(currentLevelNumber + 1);
         };
     } else {
-        showFinaleVideo(overlay, content, 'meyveler_menu.html');
+        showFinaleVideo(overlay, content, 'meyveler_menu.html#1');
     }
 }
 

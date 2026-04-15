@@ -353,7 +353,7 @@ function showCelebration() {
     const overlay = document.getElementById('celebration-overlay');
     const content = overlay.querySelector('.celebration-content');
     overlay.classList.remove('hidden');
-    showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
+    showFinaleVideo(overlay, content, 'hayvanlar_menu.html#3');
 }
 
 function showFinaleVideo(overlay, content, menuUrl) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v55';
+const CACHE_NAME = 'egitim-oyunu-v62';
 
 const CORE_ASSETS = [
   './index.html',
@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   './renkler_surukle.html',
   './sekiller_balon.html',
   './mutfak_oyunlari.html',
+  './giysiler_taniyalim.html',
   './hayvan_sesleri.html',
   './hayvanlari_taniyalim.html',
   './hayvan_bulmaca.html',
@@ -33,6 +34,7 @@ const CORE_ASSETS = [
   './js/renkler_surukle.js',
   './js/sekiller_balon.js',
   './js/mutfak_oyunlari.js',
+  './js/giysi_game.js',
   './js/renkli_civcivler.js',
   './js/renkli_toplar.js',
   './js/noktalari_birlestir.js',

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Giysileri Tanıyalım</title>
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/sw-register.js" defer></script>
+</head>
+<body>
+    <div id="celebration-overlay" class="overlay hidden">
+        <div class="celebration-content">🤩👏</div>
+    </div>
+
+    <div class="carousel-header">
+        <a href="nesneler_menu.html" class="back-btn-carousel">⬅</a>
+    </div>
+
+    <div class="game-container" style="max-width: 1000px;">
+
+        <button id="play-audio-btn" class="audio-btn">🔊 Sesi Tekrar Dinle</button>
+
+        <div id="level1-board" class="game-board hidden"></div>
+
+        <div id="level2-board" class="matching-board hidden">
+            <div id="left-column" class="match-column"></div>
+            <div id="right-column" class="match-column"></div>
+        </div>
+
+        <div id="level3-board" class="memory-board hidden"></div>
+    </div>
+
+    <script src="js/giysi_game.js"></script>
+    <script src="js/common_bgm.js"></script>
+</body>
+</html>

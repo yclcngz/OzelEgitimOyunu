@@ -360,7 +360,7 @@ function showLevelCompleteCelebration() {
             startLevel(currentLevelNumber + 1);
         };
     } else {
-        showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
+        showFinaleVideo(overlay, content, 'hayvanlar_menu.html#1');
     }
 }
 
