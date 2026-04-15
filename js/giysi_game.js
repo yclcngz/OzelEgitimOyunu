@@ -2,22 +2,22 @@ window.MAX_LEVEL = 3;
 
 // 16 Giysi Veritabanı
 const clothingItems = [
-    { id: 'terlik',        name: 'Terlik',         image: 'assets/images/giysiler/terlik.png',        audio: 'assets/sounds/isim_terlik.mp3' },
-    { id: 'eldiven',       name: 'Eldiven',         image: 'assets/images/giysiler/eldiven.png',       audio: 'assets/sounds/isim_eldiven.mp3' },
-    { id: 'ceket',         name: 'Ceket',           image: 'assets/images/giysiler/ceket.png',         audio: 'assets/sounds/isim_ceket.mp3' },
-    { id: 'sort',          name: 'Şort',            image: 'assets/images/giysiler/sort.png',          audio: 'assets/sounds/isim_sort.mp3' },
-    { id: 'mont',          name: 'Mont',            image: 'assets/images/giysiler/mont.png',          audio: 'assets/sounds/isim_mont.mp3' },
-    { id: 'corap',         name: 'Çorap',           image: 'assets/images/giysiler/corap.png',         audio: 'assets/sounds/isim_corap.mp3' },
-    { id: 'spor_ayakkabi', name: 'Spor Ayakkabı',   image: 'assets/images/giysiler/spor_ayakkabi.png', audio: 'assets/sounds/isim_spor_ayakkabi.mp3' },
-    { id: 'bot',           name: 'Bot',             image: 'assets/images/giysiler/bot.png',           audio: 'assets/sounds/isim_bot.mp3' },
-    { id: 'pantolon',      name: 'Pantolon',        image: 'assets/images/giysiler/pantolon.png',      audio: 'assets/sounds/isim_pantolon.mp3' },
-    { id: 'atki_bere',     name: 'Atkı ve Bere',    image: 'assets/images/giysiler/atki_bere.png',     audio: 'assets/sounds/isim_atki_bere.mp3' },
-    { id: 'etek',          name: 'Etek',            image: 'assets/images/giysiler/etek.png',          audio: 'assets/sounds/isim_etek.mp3' },
-    { id: 'gomlek',        name: 'Gömlek',          image: 'assets/images/giysiler/gomlek.png',        audio: 'assets/sounds/isim_gomlek.mp3' },
-    { id: 'sapka',         name: 'Şapka',           image: 'assets/images/giysiler/sapka.png',         audio: 'assets/sounds/isim_sapka.mp3' },
-    { id: 'atlet',         name: 'Atlet',           image: 'assets/images/giysiler/atlet.png',         audio: 'assets/sounds/isim_atlet.mp3' },
-    { id: 'tisort',        name: 'Tişört',          image: 'assets/images/giysiler/tisort.png',        audio: 'assets/sounds/isim_tisort.mp3' },
-    { id: 'kazak',         name: 'Kazak',           image: 'assets/images/giysiler/kazak.png',         audio: 'assets/sounds/isim_kazak.mp3' }
+    { id: 'terlik',        name: 'Terlik',         image: 'assets/images/giysiler/terlik.webp',        audio: 'assets/sounds/isim_terlik.mp3' },
+    { id: 'eldiven',       name: 'Eldiven',         image: 'assets/images/giysiler/eldiven.webp',       audio: 'assets/sounds/isim_eldiven.mp3' },
+    { id: 'ceket',         name: 'Ceket',           image: 'assets/images/giysiler/ceket.webp',         audio: 'assets/sounds/isim_ceket.mp3' },
+    { id: 'sort',          name: 'Şort',            image: 'assets/images/giysiler/sort.webp',          audio: 'assets/sounds/isim_sort.mp3' },
+    { id: 'mont',          name: 'Mont',            image: 'assets/images/giysiler/mont.webp',          audio: 'assets/sounds/isim_mont.mp3' },
+    { id: 'corap',         name: 'Çorap',           image: 'assets/images/giysiler/corap.webp',         audio: 'assets/sounds/isim_corap.mp3' },
+    { id: 'spor_ayakkabi', name: 'Spor Ayakkabı',   image: 'assets/images/giysiler/spor_ayakkabi.webp', audio: 'assets/sounds/isim_spor_ayakkabi.mp3' },
+    { id: 'bot',           name: 'Bot',             image: 'assets/images/giysiler/bot.webp',           audio: 'assets/sounds/isim_bot.mp3' },
+    { id: 'pantolon',      name: 'Pantolon',        image: 'assets/images/giysiler/pantolon.webp',      audio: 'assets/sounds/isim_pantolon.mp3' },
+    { id: 'atki_bere',     name: 'Atkı ve Bere',    image: 'assets/images/giysiler/atki_bere.webp',     audio: 'assets/sounds/isim_atki_bere.mp3' },
+    { id: 'etek',          name: 'Etek',            image: 'assets/images/giysiler/etek.webp',          audio: 'assets/sounds/isim_etek.mp3' },
+    { id: 'gomlek',        name: 'Gömlek',          image: 'assets/images/giysiler/gomlek.webp',        audio: 'assets/sounds/isim_gomlek.mp3' },
+    { id: 'sapka',         name: 'Şapka',           image: 'assets/images/giysiler/sapka.webp',         audio: 'assets/sounds/isim_sapka.mp3' },
+    { id: 'atlet',         name: 'Atlet',           image: 'assets/images/giysiler/atlet.webp',         audio: 'assets/sounds/isim_atlet.mp3' },
+    { id: 'tisort',        name: 'Tişört',          image: 'assets/images/giysiler/tisort.webp',        audio: 'assets/sounds/isim_tisort.mp3' },
+    { id: 'kazak',         name: 'Kazak',           image: 'assets/images/giysiler/kazak.webp',         audio: 'assets/sounds/isim_kazak.mp3' }
 ];
 
 // --- SEVİYE 1 SESLERİ ---

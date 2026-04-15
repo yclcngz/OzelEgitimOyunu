@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v62';
+const CACHE_NAME = 'egitim-oyunu-v63';
 
 const CORE_ASSETS = [
   './index.html',
