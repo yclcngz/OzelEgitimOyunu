@@ -40,6 +40,7 @@ function initAudioCtx() {
 
 function playSwipeSfx() {
     if (!sfxReady || !sfxBuffer || !audioCtx) return;
+    if (!carousel || carousel.dataset.sfx !== 'true') return;
     try {
         const source = audioCtx.createBufferSource();
         source.buffer = sfxBuffer;
@@ -53,6 +54,7 @@ function playSwipeSfx() {
 
 function playTapSfx() {
     if (!tapSfxReady || !tapSfxBuffer || !audioCtx) return;
+    if (!carousel || carousel.dataset.sfx !== 'true') return;
     try {
         const source = audioCtx.createBufferSource();
         source.buffer = tapSfxBuffer;

@@ -87,6 +87,7 @@ let listenedItemsCount = 0;
 let isLevel1Playable = false;
 let level1SubStages = [];
 let level1CurrentSubStage = 0;
+let currentItemAudio = null;
 
 function renderLevel1() {
     const board = document.getElementById('level1-board');
@@ -146,12 +147,12 @@ function renderLevel1SubStage() {
         imgElement.style.boxSizing = 'border-box';
 
         imgElement.addEventListener('click', () => {
-            if (!isLevel1Playable) return;
+            if (!isLevel1Playable || (currentItemAudio && !currentItemAudio.ended)) return;
             const existingHand = document.getElementById('hand-hint');
             if (existingHand) existingHand.remove();
 
-            const itemAudio = new Audio(item.audio);
-            itemAudio.play();
+            currentItemAudio = new Audio(item.audio);
+            currentItemAudio.play();
 
             if (!imgElement.classList.contains('listened-item')) {
                 imgElement.classList.add('listened-item');

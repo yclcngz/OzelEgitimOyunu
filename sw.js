@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v44';
+const CACHE_NAME = 'egitim-oyunu-v55';
 
 const CORE_ASSETS = [
   './index.html',
@@ -6,20 +6,39 @@ const CORE_ASSETS = [
   './renkler_menu.html',
   './sekiller_menu.html',
   './nesneler_menu.html',
+  './hayvanlar_menu.html',
   './meyveleri_taniyalim.html',
   './eslestirme.html',
   './bulmaca.html',
   './renkler_surukle.html',
   './sekiller_balon.html',
   './mutfak_oyunlari.html',
+  './hayvan_sesleri.html',
+  './hayvanlari_taniyalim.html',
+  './hayvan_bulmaca.html',
+  './hayvan_eslestirme.html',
+  './renkli_civcivler.html',
+  './renkli_toplar.html',
+  './noktalari_birlestir.html',
+  './yapboz.html',
   './css/style.css',
-  './js/game.js',
+  './js/carousel.js',
+  './js/common_bgm.js',
+  './js/sw-register.js',
+  './js/meyve_game.js',
+  './js/hayvan_game.js',
+  './js/hayvan_sesleri.js',
   './js/eslestirme.js',
   './js/bulmaca.js',
   './js/renkler_surukle.js',
   './js/sekiller_balon.js',
   './js/mutfak_oyunlari.js',
-  './js/sw-register.js'
+  './js/renkli_civcivler.js',
+  './js/renkli_toplar.js',
+  './js/noktalari_birlestir.js',
+  './js/yapboz.js',
+  './js/hayvan_eslestirme.js',
+  './js/hayvan_bulmaca.js'
 ];
 
 self.addEventListener('install', event => {

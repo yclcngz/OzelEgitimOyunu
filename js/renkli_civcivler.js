@@ -339,4 +339,15 @@ function showFinaleVideo(overlay, content, menuUrl) {
     };
 }
 
-startLevel(1);
+// Tüm civciv görsellerini önceden yükle, sonra oyunu başlat
+let loadedCount = 0;
+const totalImages = civcivData.length;
+
+civcivData.forEach(c => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) startLevel(1);
+    };
+    img.src = c.image;
+});
