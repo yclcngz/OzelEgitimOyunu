@@ -36,6 +36,7 @@ let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
 let isFirstMove = true;
+let isProcessing = false;
 
 // Görsel sayısına göre grid düzeni ve boyut hesaplar
 function calcLayout(n) {
@@ -102,6 +103,7 @@ function startLevel(levelNumber) {
 
 // O Anki Aşamayı Ekrana Çizen Fonksiyon
 function renderStage() {
+    isProcessing = false;
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
 
@@ -160,6 +162,9 @@ document.getElementById('play-audio-btn').addEventListener('click', playQuestion
 
 // Cevabı Kontrol Eden Fonksiyon
 function checkAnswer(clickedId, wrapperElement) {
+    if (isProcessing) return;
+    isProcessing = true;
+
     const currentStageData = currentStages[currentStageIndex];
 
     // El animasyonu varsa kaldır
@@ -167,6 +172,7 @@ function checkAnswer(clickedId, wrapperElement) {
     if (existingHand) existingHand.remove();
 
     if(currentQuestionAudio) {
+        currentQuestionAudio.onended = null;
         currentQuestionAudio.pause();
         currentQuestionAudio.currentTime = 0;
     }
@@ -193,7 +199,8 @@ function checkAnswer(clickedId, wrapperElement) {
 
     } else {
         // --- YANLIŞ CEVAP ---
-        audioDat.play();
+        audioDat.currentTime = 0;
+        audioDat.play().catch(() => {});
 
         const cross = wrapperElement.querySelector('.cross-mark');
         cross.classList.add('show-cross');
@@ -208,8 +215,9 @@ function checkAnswer(clickedId, wrapperElement) {
             if (clickedAnimalData && clickedAnimalData.wrongAudio) {
                 const specificWrongAudio = new Audio(clickedAnimalData.wrongAudio);
                 specificWrongAudio.play();
-                specificWrongAudio.onended = () => showHandHint(currentStageData.target, 1);
+                specificWrongAudio.onended = () => { isProcessing = false; showHandHint(currentStageData.target, 1); };
             } else {
+                isProcessing = false;
                 showHandHint(currentStageData.target, 1);
             }
             cross.classList.remove('show-cross');
@@ -218,6 +226,7 @@ function checkAnswer(clickedId, wrapperElement) {
 }
 
 function showHandHint(targetId, totalTaps = 3) {
+    if (isProcessing) return;
     isFirstMove = false;
     const targetEl = document.getElementById(targetId);
     if (!targetEl) return;
@@ -284,12 +293,14 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 5) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
     }

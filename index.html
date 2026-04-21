@@ -18,8 +18,8 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen">
-        <video id="splash-video" src="assets/sounds/oyun_giriş_animasyonu.mp4" autoplay muted playsinline></video>
-        <button id="splash-sound-btn">🔇</button>
+        <video id="splash-video" src="assets/sounds/oyun_giriş_animasyonu.mp4" autoplay playsinline preload="auto" style="opacity:0;transition:opacity 0.1s;pointer-events:none"></video>
+        <button id="splash-skip-btn">▶ Hemen Başla</button>
     </div>
 
     <div class="carousel-header"></div>
@@ -64,27 +64,51 @@
         (function() {
             const splash = document.getElementById('splash-screen');
             const video = document.getElementById('splash-video');
+            function blockEvent(e) { e.stopPropagation(); e.preventDefault(); }
+
             function hideSplash() {
                 sessionStorage.setItem('splashSeen', '1');
+                video.pause();
+                video.muted = true;
+                // Fade süresince alttaki menü kartlarına tıklamayı engelle
+                document.addEventListener('click', blockEvent, true);
+                document.addEventListener('touchend', blockEvent, true);
+                document.addEventListener('pointerup', blockEvent, true);
                 splash.classList.add('fade-out');
-                setTimeout(() => splash.classList.add('hidden'), 650);
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    document.removeEventListener('click', blockEvent, true);
+                    document.removeEventListener('touchend', blockEvent, true);
+                    document.removeEventListener('pointerup', blockEvent, true);
+                }, 800);
             }
 
             // Daha önce görüldüyse anında gizle
             if (sessionStorage.getItem('splashSeen')) {
+                video.pause();
+                video.removeAttribute('autoplay');
+                video.src = '';
                 splash.classList.add('hidden');
             } else {
+                video.addEventListener('canplay', () => { video.style.opacity = '1'; }, { once: true });
                 video.addEventListener('ended', hideSplash);
                 video.addEventListener('error', () => setTimeout(hideSplash, 500));
-            }
 
-            // Ses butonu
-            const soundBtn = document.getElementById('splash-sound-btn');
-            soundBtn.addEventListener('click', function() {
-                video.muted = !video.muted;
-                if (!video.muted) { video.play(); }
-                soundBtn.textContent = video.muted ? '🔇' : '🔊';
-            });
+                const p = video.play();
+                if (p) p.catch(() => { video.muted = true; video.play().catch(() => {}); });
+
+                splash.addEventListener('pointerdown', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    hideSplash();
+                }, { once: true });
+
+                document.getElementById('splash-skip-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    hideSplash();
+                });
+            }
         })();
     </script>
 

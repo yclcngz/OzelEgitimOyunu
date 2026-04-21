@@ -261,7 +261,7 @@ function handleChoice(chosen, correct, card) {
         quizLocked = true;
         card.classList.add('wrong');
         audioDat.currentTime = 0;
-        audioDat.cloneNode().play();
+        new Audio('assets/sounds/dat.mp3').play().catch(() => {});
 
         setTimeout(() => {
             card.classList.remove('wrong');

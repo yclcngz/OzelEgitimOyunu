@@ -197,7 +197,7 @@ function checkMatch() {
 
     } else {
         // --- YANLIŞ EŞLEŞTİRME ---
-        audioDat.cloneNode().play();
+        new Audio('assets/sounds/dat.mp3').play().catch(() => {});
 
         const crossL = currentLeft.wrap.querySelector('.cross-mark');
         const crossR = currentRight.wrap.querySelector('.cross-mark');
@@ -353,12 +353,14 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'hayvanlar_menu.html#1');
     }

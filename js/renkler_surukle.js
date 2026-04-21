@@ -202,7 +202,7 @@ function addTouchSupport(dragItem) {
                 }, 1000);
             }
         } else {
-            audioDat.cloneNode().play();
+            new Audio('assets/sounds/dat.mp3').play().catch(() => {});
             dragItem.classList.add('shake');
             setTimeout(() => {
                 dragItem.classList.remove('shake');
@@ -271,7 +271,8 @@ function handleDrop(e) {
         }
     } else {
         // --- YANLIŞ SEPET ---
-        audioDat.play();
+        audioDat.currentTime = 0;
+        audioDat.play().catch(() => {});
         draggedElement.classList.add('shake');
         setTimeout(() => {
             draggedElement.classList.remove('shake');
@@ -300,12 +301,14 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
     content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
-    audioLevelComplete.play();
-
-    audioLevelComplete.onended = () => {
+    const advanceLevel = () => {
+        audioLevelComplete.onended = null;
         overlay.classList.add('hidden');
         startLevel(currentLevelNumber + 1);
     };
+    audioLevelComplete.onended = advanceLevel;
+    audioLevelComplete.currentTime = 0;
+    audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
 }
 
 function showGrandFinaleCelebration() {

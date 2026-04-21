@@ -171,7 +171,7 @@ function disableCards() {
 
 function unflipCards() {
     lockBoard = true;
-    audioDat.cloneNode().play();
+    new Audio('assets/sounds/dat.mp3').play().catch(() => {});
 
     setTimeout(() => {
         firstCard.classList.remove('flipped');
@@ -313,12 +313,14 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'hayvanlar_menu.html');
     }

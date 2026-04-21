@@ -1,7 +1,9 @@
 // ============================================================
-//  Ulaşım Araçlarını Tanıyalım — Puzzle Oyunu
-//  Her araç 4 parçaya (2×2) bölünür, sürükle-bırak ile birleştirilir.
+//  Ulaşım Araçlarını Tanıyalım
+//  Üstte boş slotlar, altta karışık parçalar — sürükle-bırak
 // ============================================================
+
+window.MAX_LEVEL = 1;
 
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
@@ -16,22 +18,26 @@ const VEHICLES = [
     { id: 'ucak',     label: 'Uçak'      },
 ];
 
-// 2×2 grid: her parçanın CSS background-position değeri
-const PIECE_DEFS = [
-    { id: 'tl', bgPos: '0% 0%'     },   // Sol Üst
-    { id: 'tr', bgPos: '100% 0%'   },   // Sağ Üst
-    { id: 'bl', bgPos: '0% 100%'   },   // Sol Alt
-    { id: 'br', bgPos: '100% 100%' },   // Sağ Alt
+// Her slotun konumu ve hangi parçanın oraya ait olduğu
+const SLOTS = [
+    { id: 'tl', bgPos: '0% 0%'     },
+    { id: 'tr', bgPos: '100% 0%'   },
+    { id: 'bl', bgPos: '0% 100%'   },
+    { id: 'br', bgPos: '100% 100%' },
 ];
+const BGPOS = { tl: '0% 0%', tr: '100% 0%', bl: '0% 100%', br: '100% 100%' };
 
 let currentVehicleIdx = 0;
+let currentAudio      = null;
 let placedCount       = 0;
 let locked            = false;
-let draggedPieceId    = null;
-let showHintOnAudio   = true;   // komut sesi bitince ipucu göster
-let currentAudio      = null;
-let _touchClone       = null;
-let _touchPieceId     = null;
+
+// Sürükle state
+let dragPieceEl       = null;
+let dragPieceRect     = null;
+let dragGhost         = null;
+let dragStartX        = 0;
+let dragStartY        = 0;
 
 // ---- Yardımcılar ----
 
@@ -51,17 +57,6 @@ function playAudio(src) {
     return currentAudio;
 }
 
-// Sırayla ses çalar, hepsi bitince onDone
-function playSequential(srcs, onDone) {
-    if (!srcs.length) { onDone && onDone(); return; }
-    const [first, ...rest] = srcs;
-    const a = new Audio(first);
-    const next = () => playSequential(rest, onDone);
-    a.onended = next;
-    a.onerror = next;
-    a.play().catch(next);
-}
-
 function buildProgressBar() {
     const bar = document.getElementById('progress-bar');
     bar.innerHTML = '';
@@ -74,13 +69,12 @@ function buildProgressBar() {
     });
 }
 
-// ---- Araç Render ----
+// ---- Render ----
 
 function renderVehicle(idx) {
     currentVehicleIdx = idx;
     placedCount       = 0;
     locked            = false;
-    showHintOnAudio   = true;
 
     const vehicle = VEHICLES[idx];
     const imgSrc  = `assets/images/ulasim/${vehicle.id}.webp`;
@@ -88,212 +82,218 @@ function renderVehicle(idx) {
     document.getElementById('vehicle-label').textContent = vehicle.label;
     buildProgressBar();
 
-    // Hedef grid: 4 boş slot
-    const grid = document.getElementById('target-grid');
-    grid.innerHTML = '';
-    PIECE_DEFS.forEach(pd => {
-        const slot = document.createElement('div');
-        slot.classList.add('puzzle-slot');
-        slot.dataset.pieceId = pd.id;
-        slot.dataset.bgPos   = pd.bgPos;
-        slot.dataset.imgSrc  = imgSrc;
-        slot.textContent     = '?';
+    // Slotları oluştur (sabit sıra: tl tr bl br)
+    const slotGrid = document.getElementById('slot-grid');
+    slotGrid.innerHTML = '';
+    SLOTS.forEach(slot => {
+        const el = document.createElement('div');
+        el.classList.add('puzzle-slot');
+        el.dataset.slot = slot.id;
 
-        slot.addEventListener('dragover',  e => { e.preventDefault(); slot.classList.add('drag-over'); });
-        slot.addEventListener('dragleave', ()  => slot.classList.remove('drag-over'));
-        slot.addEventListener('drop', e => {
-            e.preventDefault();
-            slot.classList.remove('drag-over');
-            onDrop(pd.id, slot, imgSrc, pd.bgPos);
-        });
+        // Soluk rehber görsel
+        const hint = document.createElement('div');
+        hint.classList.add('slot-hint');
+        hint.style.backgroundImage    = `url('${imgSrc}')`;
+        hint.style.backgroundPosition = slot.bgPos;
+        el.appendChild(hint);
 
-        grid.appendChild(slot);
+        slotGrid.appendChild(el);
     });
 
-    // Parça havuzu: karışık 4 parça
-    const pool = document.getElementById('pieces-pool');
-    pool.innerHTML = '';
-    shuffleArray([...PIECE_DEFS]).forEach(pd => {
-        pool.appendChild(createPiece(pd, imgSrc));
+    // Karışık parçaları tepside oluştur
+    const shuffled = shuffleArray(['tl', 'tr', 'bl', 'br']);
+    const tray = document.getElementById('piece-tray');
+    tray.innerHTML = '';
+    shuffled.forEach(pieceId => {
+        const el = document.createElement('div');
+        el.classList.add('puzzle-piece');
+        el.dataset.piece = pieceId;
+        el.style.backgroundImage    = `url('${imgSrc}')`;
+        el.style.backgroundPosition = BGPOS[pieceId];
+        el.addEventListener('pointerdown', (e) => onDragStart(e, el));
+        tray.appendChild(el);
     });
 
-    // Komut sesini çal
+    // Komut sesi
     setTimeout(() => {
         const audio = playAudio(`assets/sounds/ulasim_komut_${vehicle.id}.mp3`);
-        audio.onended = () => {
-            if (showHintOnAudio) showDragHint();
-        };
+        audio.onended = () => showDragHint();
     }, 400);
-}
-
-function createPiece(pd, imgSrc) {
-    const piece = document.createElement('div');
-    piece.classList.add('puzzle-piece');
-    piece.dataset.pieceId = pd.id;
-    piece.setAttribute('draggable', 'true');
-    piece.style.backgroundImage    = `url('${imgSrc}')`;
-    piece.style.backgroundSize     = '200% 200%';
-    piece.style.backgroundPosition = pd.bgPos;
-
-    piece.addEventListener('dragstart', () => {
-        const hand = document.getElementById('hand-hint');
-        if (hand) hand.remove();
-        draggedPieceId = pd.id;
-        setTimeout(() => { piece.style.opacity = '0.35'; }, 0);
-    });
-    piece.addEventListener('dragend', () => { piece.style.opacity = ''; });
-
-    addTouchSupport(piece, pd.id, imgSrc);
-    return piece;
 }
 
 // ---- Sürükle-Bırak ----
 
-function onDrop(slotPieceId, slotEl, imgSrc, bgPos) {
-    if (locked || !draggedPieceId) return;
-    const droppedId = draggedPieceId;
-    draggedPieceId = null;
+function onDragStart(e, pieceEl) {
+    if (locked) return;
+    e.preventDefault();
 
-    if (droppedId === slotPieceId) {
-        onCorrect(droppedId, slotEl, imgSrc, bgPos);
-    } else {
-        onWrong(droppedId);
-    }
+    const hand = document.getElementById('hand-hint');
+    if (hand) hand.remove();
+
+    dragPieceEl   = pieceEl;
+    dragStartX    = e.clientX;
+    dragStartY    = e.clientY;
+    dragPieceRect = pieceEl.getBoundingClientRect();
+
+    // Ghost oluştur
+    dragGhost = document.createElement('div');
+    dragGhost.style.cssText = `
+        position: fixed;
+        width: ${dragPieceRect.width}px;
+        height: ${dragPieceRect.height}px;
+        left: ${dragPieceRect.left}px;
+        top: ${dragPieceRect.top}px;
+        background-image: ${pieceEl.style.backgroundImage};
+        background-size: 200% 200%;
+        background-position: ${pieceEl.style.backgroundPosition};
+        background-repeat: no-repeat;
+        border-radius: 10px;
+        border: 3px solid #fbbf24;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.93;
+        transform: scale(1.08);
+        transform-origin: center;
+    `;
+    document.body.appendChild(dragGhost);
+
+    pieceEl.style.opacity = '0.25';
+
+    document.addEventListener('pointermove', onDragMove, { passive: false });
+    document.addEventListener('pointerup',   onDragEnd);
+    document.addEventListener('pointercancel', onDragCancel);
 }
 
-function onCorrect(pieceId, slotEl, imgSrc, bgPos) {
-    // Slotu doldur
-    slotEl.textContent = '';
-    slotEl.classList.add('filled');
-    slotEl.style.backgroundImage    = `url('${imgSrc}')`;
-    slotEl.style.backgroundSize     = '200% 200%';
-    slotEl.style.backgroundPosition = bgPos;
-    slotEl.style.pointerEvents      = 'none';
-
-    // Havuzdan parçayı kaldır
-    const pool  = document.getElementById('pieces-pool');
-    const piece = pool.querySelector(`[data-piece-id="${pieceId}"]`);
-    if (piece) {
-        piece.style.opacity = '';
-        piece.classList.add('placed');
-    }
-
-    SND_ONAY.cloneNode().play();
-
-    placedCount++;
-    if (placedCount === PIECE_DEFS.length) {
-        locked = true;
-        setTimeout(onVehicleComplete, 700);
-    }
+function onDragMove(e) {
+    if (!dragGhost) return;
+    e.preventDefault();
+    dragGhost.style.left = `${dragPieceRect.left + (e.clientX - dragStartX)}px`;
+    dragGhost.style.top  = `${dragPieceRect.top  + (e.clientY - dragStartY)}px`;
 }
 
-function onWrong(pieceId) {
-    SND_DAT.cloneNode().play();
-    const pool  = document.getElementById('pieces-pool');
-    setTimeout(() => {
-        const piece = pool.querySelector(`[data-piece-id="${pieceId}"]`);
-        if (piece) {
-            piece.style.opacity = '';
-            piece.classList.add('shake');
-            setTimeout(() => {
-                piece.classList.remove('shake');
-                showDragHint();
-            }, 500);
-        }
-    }, 40);
-}
+function onDragEnd(e) {
+    cleanupListeners();
+    if (!dragPieceEl) return;
 
-// ---- Dokunma (Touch) Desteği ----
+    // Ghost'u geçici gizle, altındaki elementi bul
+    dragGhost.style.display = 'none';
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    dragGhost.style.display = '';
 
-function addTouchSupport(piece, pieceId, imgSrc) {
-    piece.addEventListener('touchstart', e => {
-        e.preventDefault();
-        if (locked || piece.classList.contains('placed')) return;
-        const hand = document.getElementById('hand-hint');
-        if (hand) hand.remove();
-        _touchPieceId = pieceId;
-        piece.style.opacity = '0.35';
+    const slotEl = target?.closest('.puzzle-slot');
 
-        _touchClone = piece.cloneNode(true);
-        _touchClone.style.cssText = `
-            position:fixed; pointer-events:none; opacity:0.85; z-index:9999;
-            width:${piece.offsetWidth}px; height:${piece.offsetHeight}px;
-            background-image:url('${imgSrc}');
-            background-size:200% 200%;
-            background-position:${piece.style.backgroundPosition};
-            border-radius:10px; border:3px solid #3b82f6;
-        `;
-        document.body.appendChild(_touchClone);
-    }, { passive: false });
+    if (slotEl && !slotEl.classList.contains('filled')) {
+        const slotId  = slotEl.dataset.slot;
+        const pieceId = dragPieceEl.dataset.piece;
 
-    piece.addEventListener('touchmove', e => {
-        e.preventDefault();
-        if (!_touchClone) return;
-        const t = e.touches[0];
-        _touchClone.style.left = (t.clientX - _touchClone.offsetWidth  / 2) + 'px';
-        _touchClone.style.top  = (t.clientY - _touchClone.offsetHeight / 2) + 'px';
-
-        _touchClone.style.display = 'none';
-        const el = document.elementFromPoint(t.clientX, t.clientY);
-        _touchClone.style.display = '';
-
-        document.querySelectorAll('.puzzle-slot').forEach(s => s.classList.remove('drag-over'));
-        if (el) {
-            const slot = el.closest && el.closest('.puzzle-slot');
-            if (slot && !slot.classList.contains('filled')) slot.classList.add('drag-over');
-        }
-    }, { passive: false });
-
-    piece.addEventListener('touchend', ev => {
-        if (_touchClone) { _touchClone.remove(); _touchClone = null; }
-        document.querySelectorAll('.puzzle-slot').forEach(s => s.classList.remove('drag-over'));
-        if (!_touchPieceId) return;
-        const pid = _touchPieceId;
-        _touchPieceId = null;
-        piece.style.opacity = '';
-        if (locked || piece.classList.contains('placed')) return;
-
-        const t  = ev.changedTouches[0];
-        const el = document.elementFromPoint(t.clientX, t.clientY);
-        if (!el) { onWrong(pid); return; }
-
-        const slot = el.closest && el.closest('.puzzle-slot');
-        if (slot && !slot.classList.contains('filled')) {
-            draggedPieceId = pid;
-            onDrop(slot.dataset.pieceId, slot, slot.dataset.imgSrc, slot.dataset.bgPos);
+        if (slotId === pieceId) {
+            placeInSlot(slotEl, dragPieceEl);
+            return;
         } else {
-            onWrong(pid);
+            SND_DAT.currentTime = 0;
+            SND_DAT.play().catch(() => {});
         }
-    });
+    }
+
+    bounceBack();
 }
 
-// ---- El İpucu Animasyonu ----
+function onDragCancel() {
+    cleanupListeners();
+    bounceBack();
+}
+
+function cleanupListeners() {
+    document.removeEventListener('pointermove', onDragMove);
+    document.removeEventListener('pointerup',   onDragEnd);
+    document.removeEventListener('pointercancel', onDragCancel);
+}
+
+function bounceBack() {
+    if (!dragGhost) { resetDrag(); return; }
+    const fromLeft = parseFloat(dragGhost.style.left);
+    const fromTop  = parseFloat(dragGhost.style.top);
+
+    dragGhost.animate([
+        { left: `${fromLeft}px`, top: `${fromTop}px` },
+        { left: `${dragPieceRect.left}px`, top: `${dragPieceRect.top}px` }
+    ], { duration: 240, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+        if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+        if (dragPieceEl) { dragPieceEl.style.opacity = ''; dragPieceEl = null; }
+    };
+}
+
+function placeInSlot(slotEl, pieceEl) {
+    const slotRect   = slotEl.getBoundingClientRect();
+    const fromLeft   = parseFloat(dragGhost.style.left);
+    const fromTop    = parseFloat(dragGhost.style.top);
+    const fromWidth  = parseFloat(dragGhost.style.width);
+    const fromHeight = parseFloat(dragGhost.style.height);
+
+    // Ghost'u slota doğru animasyonla götür
+    dragGhost.animate([
+        { left: `${fromLeft}px`,    top: `${fromTop}px`,    width: `${fromWidth}px`,   height: `${fromHeight}px`  },
+        { left: `${slotRect.left}px`, top: `${slotRect.top}px`, width: `${slotRect.width}px`, height: `${slotRect.height}px` }
+    ], { duration: 220, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
+        dragGhost.remove();
+        dragGhost = null;
+
+        // Slotu doldur
+        slotEl.classList.add('filled');
+        slotEl.querySelector('.slot-hint').style.backgroundImage = pieceEl.style.backgroundImage;
+
+        // Snap animasyonu
+        slotEl.animate([
+            { transform: 'scale(0.88)' },
+            { transform: 'scale(1.06)' },
+            { transform: 'scale(1)' }
+        ], { duration: 280, easing: 'ease-out' });
+
+        // Tray parçasını gizle
+        pieceEl.classList.add('placed');
+        dragPieceEl = null;
+
+        SND_ONAY.currentTime = 0;
+        SND_ONAY.play().catch(() => {});
+
+        placedCount++;
+        if (placedCount === 4) {
+            locked = true;
+            const hand = document.getElementById('hand-hint');
+            if (hand) hand.remove();
+            setTimeout(onVehicleComplete, 700);
+        }
+    };
+}
+
+function resetDrag() {
+    if (dragPieceEl) { dragPieceEl.style.opacity = ''; dragPieceEl = null; }
+    dragGhost = null;
+}
+
+// ---- El İpucu ----
 
 function showDragHint() {
-    showHintOnAudio = false;
     const existing = document.getElementById('hand-hint');
     if (existing) existing.remove();
+    if (locked) return;
 
-    const pool = document.getElementById('pieces-pool');
-    const firstPiece = pool.querySelector('.puzzle-piece:not(.placed)');
-    if (!firstPiece) return;
-    const pieceId = firstPiece.dataset.pieceId;
-
-    const grid = document.getElementById('target-grid');
-    const slot  = grid.querySelector(`.puzzle-slot[data-piece-id="${pieceId}"]`);
-    if (!slot) return;
+    // İlk boş slotu ve eşleşen tray parçasını bul
+    const emptySlot = document.querySelector('.puzzle-slot:not(.filled)');
+    if (!emptySlot) return;
+    const slotId    = emptySlot.dataset.slot;
+    const pieceEl   = document.querySelector(`.puzzle-piece[data-piece="${slotId}"]:not(.placed)`);
+    if (!pieceEl) return;
 
     const FONT_SIZE = 72;
-    function getCenter(el) {
+    function center(el) {
         const r = el.getBoundingClientRect();
-        return {
-            x: r.left + r.width  / 2 - FONT_SIZE / 2,
-            y: r.top  + r.height * 0.25,
-        };
+        return { x: r.left + r.width / 2 - FONT_SIZE / 2, y: r.top + r.height / 2 - FONT_SIZE / 2 };
     }
 
-    const src  = getCenter(firstPiece);
-    const tgt  = getCenter(slot);
+    const src  = center(pieceEl);
+    const tgt  = center(emptySlot);
     const offY = window.innerHeight + 100;
 
     const hand = document.createElement('div');
@@ -306,41 +306,30 @@ function showDragHint() {
     `;
     document.body.appendChild(hand);
 
-    // Ekran dışından parçaya gel
     hand.animate([
         { transform: `translate(${src.x}px,${offY}px)` },
         { transform: `translate(${src.x}px,${src.y}px)` }
     ], { duration: 400, easing: 'ease-out', fill: 'forwards' }).onfinish = () => {
-
-        // Parçaya tıkla (hafif sekme)
         hand.animate([
-            { transform: `translate(${src.x}px,${src.y}px)`,      easing: 'ease-in'  },
-            { transform: `translate(${src.x}px,${src.y + 20}px)`, easing: 'ease-out' },
-            { transform: `translate(${src.x}px,${src.y}px)` }
-        ], { duration: 350, fill: 'forwards' }).onfinish = () => {
-
-            setTimeout(() => {
-                // Slota sürükle
+            { transform: `translate(${src.x}px,${src.y}px) scale(1)` },
+            { transform: `translate(${src.x}px,${src.y}px) scale(0.8)` }
+        ], { duration: 180, fill: 'forwards' }).onfinish = () => {
+            hand.animate([
+                { transform: `translate(${src.x}px,${src.y}px) scale(0.8)` },
+                { transform: `translate(${tgt.x}px,${tgt.y}px) scale(0.8)` }
+            ], { duration: 550, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
                 hand.animate([
-                    { transform: `translate(${src.x}px,${src.y}px)` },
-                    { transform: `translate(${tgt.x}px,${tgt.y}px)` }
-                ], { duration: 600, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
-
-                    // Slota bırak (hafif sekme)
-                    hand.animate([
-                        { transform: `translate(${tgt.x}px,${tgt.y}px)`,      easing: 'ease-in'  },
-                        { transform: `translate(${tgt.x}px,${tgt.y + 20}px)`, easing: 'ease-out' },
-                        { transform: `translate(${tgt.x}px,${tgt.y}px)` }
-                    ], { duration: 300, fill: 'forwards' }).onfinish = () => {
-
-                        // Ekran dışına git
+                    { transform: `translate(${tgt.x}px,${tgt.y}px) scale(0.8)` },
+                    { transform: `translate(${tgt.x}px,${tgt.y}px) scale(1)` }
+                ], { duration: 180, fill: 'forwards' }).onfinish = () => {
+                    setTimeout(() => {
                         hand.animate([
                             { transform: `translate(${tgt.x}px,${tgt.y}px)` },
                             { transform: `translate(${src.x}px,${offY}px)` }
-                        ], { duration: 400, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
-                    };
+                        ], { duration: 380, easing: 'ease-in', fill: 'forwards' }).onfinish = () => hand.remove();
+                    }, 300);
                 };
-            }, 200);
+            };
         };
     };
 }
@@ -349,8 +338,6 @@ function showDragHint() {
 
 function onVehicleComplete() {
     const vehicle = VEHICLES[currentVehicleIdx];
-
-    // Önce araç sesi, ses bitince konfeti + tebrikler
     const vehicleAudio = new Audio(`assets/sounds/ulasim_ses_${vehicle.id}.mp3`);
 
     function popConfetti() {

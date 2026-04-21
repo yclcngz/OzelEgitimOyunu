@@ -1,4 +1,5 @@
-﻿// 8 Temel Şeklin Vektörel (SVG) Kodları Veritabanı
+﻿window.MAX_LEVEL = 5;
+// 8 Temel Şeklin Vektörel (SVG) Kodları Veritabanı
 const shapesDatabase = [
     { id: 'kare', label: 'Kare', color: '#e74c3c', svg: '<svg viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" fill="currentColor"/></svg>' },
     { id: 'daire', label: 'Daire', color: '#3498db', svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="currentColor"/></svg>' },
@@ -169,7 +170,8 @@ function handleBalloonClick(balloonElement) {
         }
     } else {
         // --- YANLIŞ BALONA TIKLANDI ---
-        audioDat.play();
+        audioDat.currentTime = 0;
+        audioDat.play().catch(() => {});
         // İsteğe bağlı: Yanlış balonu kırmızı renge boyayıp hızlıca düşürebiliriz veya sadece sallayabiliriz
         balloonElement.style.animationPlayState = 'paused'; // Uçuşu anlık durdur
         balloonElement.classList.add('shake');
@@ -256,12 +258,14 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
     content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
-    audioLevelComplete.play();
-
-    audioLevelComplete.onended = () => {
+    const advanceLevel = () => {
+        audioLevelComplete.onended = null;
         overlay.classList.add('hidden');
         startLevel(currentLevelNumber + 1);
     };
+    audioLevelComplete.onended = advanceLevel;
+    audioLevelComplete.currentTime = 0;
+    audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
 }
 
 function showGrandFinaleCelebration() {

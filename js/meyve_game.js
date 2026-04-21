@@ -31,6 +31,7 @@ let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
 let isFirstMove = true;
+let isProcessing = false;
 
 function shuffleArray(array) {
     let shuffled = [...array];
@@ -91,6 +92,7 @@ function calcLayout(n) {
 }
 
 function renderStage() {
+    isProcessing = false;
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
 
@@ -148,6 +150,7 @@ function playQuestionAudio() {
 document.getElementById('play-audio-btn').addEventListener('click', playQuestionAudio);
 
 function showHandHint(targetId, totalTaps = 3) {
+    if (isProcessing) return;
     isFirstMove = false;
     const targetEl = document.getElementById(targetId);
     if (!targetEl) return;
@@ -210,13 +213,16 @@ function showHandHint(targetId, totalTaps = 3) {
 }
 
 function checkAnswer(clickedId, wrapperElement) {
+    if (isProcessing) return;
+    isProcessing = true;
+
     const currentStageData = currentStages[currentStageIndex];
 
-    // El animasyonu varsa kaldır
     const existingHand = document.getElementById('hand-hint');
     if (existingHand) existingHand.remove();
 
     if (currentQuestionAudio) {
+        currentQuestionAudio.onended = null;
         currentQuestionAudio.pause();
         currentQuestionAudio.currentTime = 0;
     }
@@ -240,7 +246,8 @@ function checkAnswer(clickedId, wrapperElement) {
         }, 2000);
 
     } else {
-        audioDat.play();
+        audioDat.currentTime = 0;
+        audioDat.play().catch(() => {});
 
         const cross = wrapperElement.querySelector('.cross-mark');
         cross.classList.add('show-cross');
@@ -255,8 +262,9 @@ function checkAnswer(clickedId, wrapperElement) {
             if (clickedFruitData && clickedFruitData.wrongAudio) {
                 const specificWrongAudio = new Audio(clickedFruitData.wrongAudio);
                 specificWrongAudio.play();
-                specificWrongAudio.onended = () => showHandHint(currentStageData.target, 1);
+                specificWrongAudio.onended = () => { isProcessing = false; showHandHint(currentStageData.target, 1); };
             } else {
+                isProcessing = false;
                 showHandHint(currentStageData.target, 1);
             }
             cross.classList.remove('show-cross');
@@ -273,12 +281,14 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 5) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'meyveler_menu.html');
     }

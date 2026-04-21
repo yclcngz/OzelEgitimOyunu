@@ -1,4 +1,5 @@
-﻿const fruitNames = [
+﻿window.MAX_LEVEL = 4;
+const fruitNames = [
     "muz", "elma", "portakal", "cilek", "kiraz", "nar", "kivi",
     "armut", "ananas", "mandalina", "karpuz", "kayisi", "seftali",
     "kavun", "uzum", "avokado", "incir"
@@ -189,7 +190,7 @@ function checkMatch() {
 
     } else {
         // --- YANLIŞ EŞLEŞTİRME ---
-        audioDat.cloneNode().play();
+        new Audio('assets/sounds/dat.mp3').play().catch(() => {});
 
         const crossL = currentLeft.wrap.querySelector('.cross-mark');
         const crossR = currentRight.wrap.querySelector('.cross-mark');
@@ -227,12 +228,14 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 4) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevelNumber + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'meyveler_menu.html#1');
     }

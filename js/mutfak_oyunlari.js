@@ -315,7 +315,7 @@ function checkMatchLvl2() {
             isProcessing = false;
         }
     } else {
-        audioDat.cloneNode().play();
+        new Audio('assets/sounds/dat.mp3').play().catch(() => {});
         curL.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curR.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curL.img.classList.add('shake'); curR.img.classList.add('shake');
@@ -444,7 +444,7 @@ function flipCard() {
         }
     } else {
         lockBoard = true;
-        audioDat.cloneNode().play();
+        new Audio('assets/sounds/dat.mp3').play().catch(() => {});
         setTimeout(() => {
             firstCard.classList.remove('flipped');
             secondCard.classList.remove('flipped');
@@ -605,12 +605,14 @@ function showLevelCompleteCelebration() {
     if (currentLevel < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
-
-        audioLevelComplete.onended = () => {
+        const advanceLevel = () => {
+            audioLevelComplete.onended = null;
             overlay.classList.add('hidden');
             startLevel(currentLevel + 1);
         };
+        audioLevelComplete.onended = advanceLevel;
+        audioLevelComplete.currentTime = 0;
+        audioLevelComplete.play().catch(() => setTimeout(advanceLevel, 500));
     } else {
         showFinaleVideo(overlay, content, 'nesneler_menu.html');
     }
