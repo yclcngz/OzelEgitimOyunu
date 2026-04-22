@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Çocuk Eğitim Oyunları 2-9 Yaş</string>
+    <string name="title_activity_main">Çocuk Eğitim Oyunları 2-9 Yaş</string>
+    <string name="package_name">com.ozelegitimoyunu.app</string>
+    <string name="custom_url_scheme">com.ozelegitimoyunu.app</string>
+</resources>

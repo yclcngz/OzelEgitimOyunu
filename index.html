@@ -18,8 +18,9 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen">
-        <video id="splash-video" src="assets/sounds/oyun_giriş_animasyonu.mp4" autoplay muted playsinline></video>
-        <button id="splash-sound-btn">🔇</button>
+        <video id="splash-video" src="assets/sounds/oyun_giris_animasyonu.mp4" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <button id="splash-sound-btn">🔊</button>
+        <button id="splash-start-btn">🚀 Hemen Başla!</button>
     </div>
 
     <div class="carousel-header"></div>
@@ -73,6 +74,9 @@
             // Daha önce görüldüyse anında gizle
             if (sessionStorage.getItem('splashSeen')) {
                 splash.classList.add('hidden');
+                video.pause();
+                video.removeAttribute('src');
+                video.remove();
             } else {
                 video.addEventListener('ended', hideSplash);
                 video.addEventListener('error', () => setTimeout(hideSplash, 500));
@@ -80,11 +84,20 @@
 
             // Ses butonu
             const soundBtn = document.getElementById('splash-sound-btn');
-            soundBtn.addEventListener('click', function() {
+            soundBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
                 video.muted = !video.muted;
-                if (!video.muted) { video.play(); }
                 soundBtn.textContent = video.muted ? '🔇' : '🔊';
             });
+
+            // Hemen Başla butonu veya ekrana herhangi bir yere tıklama → splash kapat
+            function skipSplash(e) {
+                e.stopPropagation();
+                video.pause();
+                hideSplash();
+            }
+            document.getElementById('splash-start-btn').addEventListener('click', skipSplash);
+            splash.addEventListener('click', skipSplash);
         })();
     </script>
 

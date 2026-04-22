@@ -36,6 +36,7 @@ let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
 let isFirstMove = true;
+let isAnswering = false;
 
 // Görsel sayısına göre grid düzeni ve boyut hesaplar
 function calcLayout(n) {
@@ -102,6 +103,7 @@ function startLevel(levelNumber) {
 
 // O Anki Aşamayı Ekrana Çizen Fonksiyon
 function renderStage() {
+    isAnswering = false;
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
 
@@ -160,6 +162,7 @@ document.getElementById('play-audio-btn').addEventListener('click', playQuestion
 
 // Cevabı Kontrol Eden Fonksiyon
 function checkAnswer(clickedId, wrapperElement) {
+    if (isAnswering) return;
     const currentStageData = currentStages[currentStageIndex];
 
     // El animasyonu varsa kaldır
@@ -173,6 +176,7 @@ function checkAnswer(clickedId, wrapperElement) {
 
     if (clickedId === currentStageData.target) {
         // --- DOĞRU CEVAP ---
+        isAnswering = true;
         audioConfetti.play();
         triggerConfetti();
 
@@ -297,8 +301,8 @@ function showLevelCompleteCelebration() {
 
 function showFinaleVideo(overlay, content, menuUrl) {
     content.innerHTML = `
-        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
-               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline onplaying="this.style.opacity=1"
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101; opacity: 0; transition: opacity 0.5s;"></video>
     `;
     content.className = 'celebration-content';
     content.style.cssText = 'width:100%;height:100%;';

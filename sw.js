@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v75';
+const CACHE_NAME = 'egitim-oyunu-v98';
 
 const CORE_ASSETS = [
   './index.html',
@@ -52,7 +52,7 @@ self.addEventListener('install', event => {
         CORE_ASSETS.map(url =>
           fetch(new Request(url, { redirect: 'follow' }))
             .then(response => {
-              if (response.ok) {
+              if (response.status === 200) {
                 return cache.put(url, response);
               }
             })
@@ -77,7 +77,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (!event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(fetch(event.request).catch(() => new Response('')));
+    event.respondWith(fetch(new Request(event.request, { redirect: 'follow' })).catch(() => new Response('')));
     return;
   }
 
@@ -86,8 +86,8 @@ self.addEventListener('fetch', event => {
   // JS dosyaları: network-first (her zaman güncel versiyon)
   if (url.pathname.endsWith('.js')) {
     event.respondWith(
-      fetch(event.request).then(response => {
-        if (response.ok) {
+      fetch(new Request(event.request, { redirect: 'follow' })).then(response => {
+        if (response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
@@ -102,10 +102,8 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) return cached;
 
-      const fetchRequest = new Request(event.request, { redirect: 'follow' });
-
-      return fetch(fetchRequest).then(response => {
-        if (response.ok && !response.redirected) {
+      return fetch(new Request(event.request, { redirect: 'follow' })).then(response => {
+        if (response.status === 200 && !response.redirected) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }

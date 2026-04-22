@@ -31,6 +31,7 @@ let currentLevelNumber = 1;
 let currentStages = [];
 let currentStageIndex = 0;
 let isFirstMove = true;
+let isAnswering = false;
 
 function shuffleArray(array) {
     let shuffled = [...array];
@@ -91,6 +92,7 @@ function calcLayout(n) {
 }
 
 function renderStage() {
+    isAnswering = false;
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
 
@@ -210,6 +212,7 @@ function showHandHint(targetId, totalTaps = 3) {
 }
 
 function checkAnswer(clickedId, wrapperElement) {
+    if (isAnswering) return;
     const currentStageData = currentStages[currentStageIndex];
 
     // El animasyonu varsa kaldır
@@ -222,6 +225,7 @@ function checkAnswer(clickedId, wrapperElement) {
     }
 
     if (clickedId === currentStageData.target) {
+        isAnswering = true;
         audioConfetti.play();
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
 
@@ -286,8 +290,8 @@ function showLevelCompleteCelebration() {
 
 function showFinaleVideo(overlay, content, menuUrl) {
     content.innerHTML = `
-        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
-               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline onplaying="this.style.opacity=1"
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101; opacity: 0; transition: opacity 0.5s;"></video>
     `;
     content.className = 'celebration-content';
     content.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';

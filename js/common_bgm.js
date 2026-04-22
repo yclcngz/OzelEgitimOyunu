@@ -87,4 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.setItem('bgmMuted', '1');
         }
     });
+
+    // Capacitor Event'lerini yükle ve başlat
+    const capScript = document.createElement('script');
+    capScript.src = 'js/capacitor_events.bundle.js';
+    capScript.onload = () => {
+        if (window.CapEvents && window.CapEvents.initCapacitorEvents) {
+            window.CapEvents.initCapacitorEvents(bgmAudio, () => isMuted);
+        }
+    };
+    document.body.appendChild(capScript);
 });

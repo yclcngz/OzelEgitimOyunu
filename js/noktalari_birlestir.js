@@ -382,8 +382,8 @@ function showGameEnd() {
     const content = overlay.querySelector('.celebration-content');
     overlay.classList.remove('hidden');
     content.innerHTML = `
-        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline
-               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101;"></video>`;
+        <video id="finale-video" src="${FINALE_VIDEO_SRC}" autoplay playsinline onplaying="this.style.opacity=1"
+               style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:101; opacity: 0; transition: opacity 0.5s;"></video>`;
     content.className = 'celebration-content';
     content.style.cssText = 'width:100%;height:100%;';
     const vid = content.querySelector('#finale-video');

@@ -48,6 +48,49 @@
 #splash-sound-btn:active {
     transform: scale(0.9);
 }
+
+#splash-start-btn {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    padding: 18px 44px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border: 4px solid #bbf7d0;
+    border-radius: 60px;
+    cursor: pointer;
+    box-shadow:
+        0 0 0 0 rgba(34,197,94,0.7),
+        0 6px 24px rgba(0,0,0,0.4);
+    animation: splash-btn-pulse 1.8s ease-in-out infinite, fire-glow 0.4s ease-in-out infinite alternate;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+}
+
+#splash-start-btn:active {
+    transform: translateX(-50%) scale(0.93);
+}
+
+@keyframes splash-btn-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.7), 0 6px 24px rgba(0,0,0,0.4); }
+    60%  { box-shadow: 0 0 0 18px rgba(34,197,94,0), 0 6px 24px rgba(0,0,0,0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0), 0 6px 24px rgba(0,0,0,0.4); }
+}
+
+@keyframes fire-glow {
+    from {
+        filter: drop-shadow(0 0 8px #facc15) drop-shadow(0 0 18px #f97316) drop-shadow(0 0 32px #ef4444);
+        border-color: #fde68a;
+    }
+    to {
+        filter: drop-shadow(0 0 14px #fbbf24) drop-shadow(0 0 28px #fb923c) drop-shadow(0 0 48px #dc2626);
+        border-color: #fff;
+    }
+}
 /* ========================= */
 
 button { outline: none; }
