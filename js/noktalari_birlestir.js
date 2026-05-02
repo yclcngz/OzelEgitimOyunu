@@ -356,7 +356,7 @@ function onShapeComplete() {
             fillEl.style.transition = 'opacity 0.5s';
             fillEl.setAttribute('opacity', '0.28');
         }
-        SND_ONAY.cloneNode().play();
+        SND_ONAY.currentTime = 0; SND_ONAY.play().catch(() => {});
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
 
         setTimeout(() => {

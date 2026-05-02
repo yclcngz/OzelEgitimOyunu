@@ -17,7 +17,6 @@ const allFruitsData = fruitNames.map(name => ({
 }));
 
 // Ortak Sesler
-const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioConfetti = new Audio('assets/sounds/konfeti.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
@@ -226,7 +225,8 @@ function checkAnswer(clickedId, wrapperElement) {
 
     if (clickedId === currentStageData.target) {
         isAnswering = true;
-        audioConfetti.play();
+        audioConfetti.currentTime = 0;
+        audioConfetti.play().catch(() => {});
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
 
         setTimeout(() => {
@@ -244,7 +244,7 @@ function checkAnswer(clickedId, wrapperElement) {
         }, 2000);
 
     } else {
-        audioDat.play();
+        window.playWrongAnswerSound();
 
         const cross = wrapperElement.querySelector('.cross-mark');
         cross.classList.add('show-cross');
@@ -277,7 +277,7 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 5) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
+        audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');

@@ -88,6 +88,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- YANLIŞ CEVAP SESİ (Web Audio — çocuk dostu yumuşak boing) ---
+    window.playWrongAnswerSound = function() {
+        if (!isMuted) bgmAudio.volume = 0.01;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) {
+            setTimeout(() => { if (!isMuted) bgmAudio.volume = 0.06; }, 700);
+            return;
+        }
+        const ctx = new AudioCtx();
+        function playNote(t, f1, f2, dur) {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.connect(g); g.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f1, t);
+            osc.frequency.exponentialRampToValueAtTime(f2, t + dur);
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.38, t + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            osc.start(t); osc.stop(t + dur);
+        }
+        playNote(ctx.currentTime,        550, 300, 0.28);
+        playNote(ctx.currentTime + 0.22, 450, 250, 0.32);
+        setTimeout(() => {
+            if (!isMuted) bgmAudio.volume = 0.06;
+            ctx.close().catch(() => {});
+        }, 700);
+    };
+
     // Capacitor Event'lerini yükle ve başlat
     const capScript = document.createElement('script');
     capScript.src = 'js/capacitor_events.bundle.js';

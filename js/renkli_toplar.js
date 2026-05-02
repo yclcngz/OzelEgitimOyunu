@@ -13,7 +13,6 @@ const RENKLER = [
 // Ses yolları
 const SND_BASE = 'assets/sounds/';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
-const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 
 let commandOrder = [];
@@ -95,7 +94,7 @@ function onCorrectDrop(ball) {
     ball.style.opacity = '';   // inline stili temizle, .placed sınıfı çalışsın
     ball.classList.add('placed');
 
-    SND_ONAY.cloneNode().play();
+    SND_ONAY.currentTime = 0; SND_ONAY.play().catch(() => {});
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
 
     const basket = document.getElementById('basket-drop');
@@ -109,7 +108,7 @@ function onCorrectDrop(ball) {
 // --- YANLIŞ TOP ---
 function onWrongDrop(ball) {
     locked = true;
-    SND_DAT.cloneNode().play();
+    window.playWrongAnswerSound();
     ball.classList.add('shake');
 
     const wrongId = ball.dataset.id;

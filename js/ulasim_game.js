@@ -5,7 +5,6 @@
 
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
-const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 
 const VEHICLES = [
     { id: 'otobus',   label: 'Otobüs'   },
@@ -178,7 +177,7 @@ function onCorrect(pieceId, slotEl, imgSrc, bgPos) {
         piece.classList.add('placed');
     }
 
-    SND_ONAY.cloneNode().play();
+    SND_ONAY.currentTime = 0; SND_ONAY.play().catch(() => {});
 
     placedCount++;
     if (placedCount === PIECE_DEFS.length) {
@@ -188,7 +187,7 @@ function onCorrect(pieceId, slotEl, imgSrc, bgPos) {
 }
 
 function onWrong(pieceId) {
-    SND_DAT.cloneNode().play();
+    window.playWrongAnswerSound();
     const pool  = document.getElementById('pieces-pool');
     setTimeout(() => {
         const piece = pool.querySelector(`[data-piece-id="${pieceId}"]`);

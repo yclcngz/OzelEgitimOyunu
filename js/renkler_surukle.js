@@ -13,7 +13,6 @@ const colorsDatabase = [
 // Ses Dosyaları (surukle_ses.mp3'ü klasörüne eklemeyi unutma)
 const audioInstruction = new Audio('assets/sounds/surukle_ses.mp3'); 
 const audioOnay = new Audio('assets/sounds/onay.mp3'); 
-const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
@@ -191,7 +190,7 @@ function addTouchSupport(dragItem) {
         const basketColor   = el.dataset.color;
 
         if (draggedColor === basketColor) {
-            audioOnay.cloneNode().play();
+            audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
             triggerConfettiMini();
             dragItem.classList.add('hidden-drag');
             itemsSuccessfullyDropped++;
@@ -202,7 +201,7 @@ function addTouchSupport(dragItem) {
                 }, 1000);
             }
         } else {
-            audioDat.cloneNode().play();
+            window.playWrongAnswerSound();
             dragItem.classList.add('shake');
             setTimeout(() => {
                 dragItem.classList.remove('shake');
@@ -252,7 +251,7 @@ function handleDrop(e) {
 
     if (draggedColor === basketColor) {
         // --- DOĞRU SEPET ---
-        audioOnay.cloneNode().play();
+        audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
         triggerConfettiMini();
         
         // Kartı görünmez yap (sanki sepetin içine girmiş gibi)
@@ -271,7 +270,7 @@ function handleDrop(e) {
         }
     } else {
         // --- YANLIŞ SEPET ---
-        audioDat.play();
+        window.playWrongAnswerSound();
         draggedElement.classList.add('shake');
         setTimeout(() => {
             draggedElement.classList.remove('shake');
@@ -300,7 +299,7 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
     content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
-    audioLevelComplete.play();
+    audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
     audioLevelComplete.onended = () => {
         overlay.classList.add('hidden');

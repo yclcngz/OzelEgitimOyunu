@@ -8,7 +8,6 @@
 const SND_BASE = 'assets/sounds/';
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 const SND_ONAY = new Audio('assets/sounds/onay.mp3');
-const SND_DAT  = new Audio('assets/sounds/dat.mp3');
 
 // Her şekil: pieces dizisi { id, path (SVG path) }
 // path hem hedef slot hem parça SVG için kullanılır.
@@ -179,7 +178,7 @@ function onCorrectPlace(pieceId, slotEl) {
     const wrapper = pool.querySelector(`[data-piece-id="${pieceId}"]`);
     if (wrapper) wrapper.classList.add('placed');
 
-    SND_ONAY.cloneNode().play();
+    SND_ONAY.currentTime = 0; SND_ONAY.play().catch(() => {});
     confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
 
     placedCount++;
@@ -212,7 +211,7 @@ function onCorrectPlace(pieceId, slotEl) {
 }
 
 function onWrongPlace(pieceId) {
-    SND_DAT.cloneNode().play();
+    window.playWrongAnswerSound();
     const wrapper = pool.querySelector(`[data-piece-id="${pieceId}"]`);
     if (wrapper) {
         wrapper.classList.add('shake');

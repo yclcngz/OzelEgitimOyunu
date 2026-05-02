@@ -14,7 +14,6 @@ const allAnimalsData = animalNames.map(name => ({
 // Sesler
 const audioInstruction = new Audio('assets/sounds/hayvan_bulmaca.mp3');
 const audioOnay = new Audio('assets/sounds/onay.mp3');
-const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
@@ -151,7 +150,7 @@ function disableCards() {
     firstCard.removeEventListener('click', flipCard);
     secondCard.removeEventListener('click', flipCard);
 
-    audioOnay.cloneNode().play();
+    audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
     matchedPairsCount++;
 
     resetBoard();
@@ -171,7 +170,7 @@ function disableCards() {
 
 function unflipCards() {
     lockBoard = true;
-    audioDat.cloneNode().play();
+    window.playWrongAnswerSound();
 
     setTimeout(() => {
         firstCard.classList.remove('flipped');
@@ -313,7 +312,7 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
+        audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');

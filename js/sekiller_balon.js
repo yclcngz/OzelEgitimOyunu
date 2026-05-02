@@ -13,7 +13,6 @@ const shapesDatabase = [
 // Sesler
 const audioInstruction = new Audio('assets/sounds/sekil_bul_ses.mp3'); 
 const audioPop = new Audio('assets/sounds/pat.mp3'); 
-const audioDat = new Audio('assets/sounds/dat.mp3'); 
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3'); 
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3'); 
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
@@ -132,7 +131,7 @@ function handleBalloonClick(balloonElement) {
     if (clickedId === currentTargetShape.id) {
         // --- DOĞRU BALON PATLATILDI ---
         audioPop.currentTime = 0;
-        audioPop.play();
+        audioPop.play().catch(() => {});
         
         // Ekranda patladığı konumu al ve o renkte parçacıklar fırlat
         const rect = balloonElement.getBoundingClientRect();
@@ -169,7 +168,7 @@ function handleBalloonClick(balloonElement) {
         }
     } else {
         // --- YANLIŞ BALONA TIKLANDI ---
-        audioDat.play();
+        window.playWrongAnswerSound();
         // İsteğe bağlı: Yanlış balonu kırmızı renge boyayıp hızlıca düşürebiliriz veya sadece sallayabiliriz
         balloonElement.style.animationPlayState = 'paused'; // Uçuşu anlık durdur
         balloonElement.classList.add('shake');
@@ -256,7 +255,7 @@ function showLevelCompleteCelebration() {
     overlay.classList.remove('hidden');
     content.innerHTML = '🤩👏';
     content.className = 'celebration-content';
-    audioLevelComplete.play();
+    audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
     audioLevelComplete.onended = () => {
         overlay.classList.add('hidden');

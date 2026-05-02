@@ -34,7 +34,6 @@ const allStages = [...listenStages, ...quizStages];
 
 // Ses dosyaları
 const audioOnay = new Audio('assets/sounds/onay.mp3');
-const audioDat  = new Audio('assets/sounds/dat.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
 
@@ -244,7 +243,7 @@ function handleChoice(chosen, correct, card) {
         stopCurrentAudio();
         card.classList.add('correct');
         audioOnay.currentTime = 0;
-        audioOnay.cloneNode().play();
+        audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
         triggerConfetti();
 
         setTimeout(() => {
@@ -260,8 +259,7 @@ function handleChoice(chosen, correct, card) {
     } else {
         quizLocked = true;
         card.classList.add('wrong');
-        audioDat.currentTime = 0;
-        audioDat.cloneNode().play();
+        window.playWrongAnswerSound();
 
         setTimeout(() => {
             card.classList.remove('wrong');

@@ -14,7 +14,6 @@ const allAnimalsData = animalNames.map(name => ({
 // Ses Dosyaları
 const audioInstruction = new Audio('assets/sounds/hayvan_eslestirme.mp3');
 const audioOnay = new Audio('assets/sounds/onay.mp3');
-const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
@@ -172,7 +171,7 @@ function checkMatch() {
 
     if (currentLeft.id === currentRight.id) {
         // --- DOĞRU EŞLEŞTİRME ---
-        audioOnay.cloneNode().play();
+        audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
 
         currentLeft.img.classList.remove('selected-fruit');
         currentRight.img.classList.remove('selected-fruit');
@@ -197,7 +196,7 @@ function checkMatch() {
 
     } else {
         // --- YANLIŞ EŞLEŞTİRME ---
-        audioDat.cloneNode().play();
+        window.playWrongAnswerSound();
 
         const crossL = currentLeft.wrap.querySelector('.cross-mark');
         const crossR = currentRight.wrap.querySelector('.cross-mark');
@@ -353,7 +352,7 @@ function showLevelCompleteCelebration() {
     if (currentLevelNumber < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
+        audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');

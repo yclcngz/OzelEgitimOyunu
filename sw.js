@@ -1,4 +1,4 @@
-const CACHE_NAME = 'egitim-oyunu-v98';
+const CACHE_NAME = 'egitim-oyunu-v102';
 
 const CORE_ASSETS = [
   './index.html',
@@ -77,7 +77,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (!event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(fetch(new Request(event.request, { redirect: 'follow' })).catch(() => new Response('')));
+    event.respondWith(fetch(event.request).catch(() => new Response('')));
     return;
   }
 
@@ -86,7 +86,7 @@ self.addEventListener('fetch', event => {
   // JS dosyaları: network-first (her zaman güncel versiyon)
   if (url.pathname.endsWith('.js')) {
     event.respondWith(
-      fetch(new Request(event.request, { redirect: 'follow' })).then(response => {
+      fetch(event.request).then(response => {
         if (response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -102,7 +102,7 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) return cached;
 
-      return fetch(new Request(event.request, { redirect: 'follow' })).then(response => {
+      return fetch(event.request).then(response => {
         if (response.status === 200 && !response.redirected) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));

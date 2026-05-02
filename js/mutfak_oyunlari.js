@@ -24,7 +24,6 @@ const audioLvl3Komut = new Audio('assets/sounds/ayni_nesneleri_bulalım_komut.mp
 
 // --- ORTAK SESLER ---
 const audioOnay = new Audio('assets/sounds/onay.mp3');
-const audioDat = new Audio('assets/sounds/dat.mp3');
 const audioLevelComplete = new Audio('assets/sounds/tebrikler_basardin.mp3');
 const audioGrandFinale = new Audio('assets/sounds/basari_fon.mp3');
 const FINALE_VIDEO_SRC = 'assets/sounds/kutlama.mp4';
@@ -296,7 +295,7 @@ function checkMatchLvl2() {
     selectedLeft = null; selectedRight = null;
 
     if (curL.id === curR.id) {
-        audioOnay.cloneNode().play();
+        audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
         curL.img.className = 'fruit-item matched-fruit';
         curR.img.className = 'fruit-item matched-fruit';
 
@@ -315,7 +314,7 @@ function checkMatchLvl2() {
             isProcessing = false;
         }
     } else {
-        audioDat.cloneNode().play();
+        window.playWrongAnswerSound();
         curL.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curR.wrap.querySelector('.cross-mark').classList.add('show-cross');
         curL.img.classList.add('shake'); curR.img.classList.add('shake');
@@ -427,7 +426,7 @@ function flipCard() {
     if (firstCard.dataset.id === secondCard.dataset.id) {
         firstCard.removeEventListener('click', flipCard);
         secondCard.removeEventListener('click', flipCard);
-        audioOnay.cloneNode().play();
+        audioOnay.currentTime = 0; audioOnay.play().catch(() => {});
         matchedPairsLvl3++;
         resetBoard();
 
@@ -444,7 +443,7 @@ function flipCard() {
         }
     } else {
         lockBoard = true;
-        audioDat.cloneNode().play();
+        window.playWrongAnswerSound();
         setTimeout(() => {
             firstCard.classList.remove('flipped');
             secondCard.classList.remove('flipped');
@@ -605,7 +604,7 @@ function showLevelCompleteCelebration() {
     if (currentLevel < 3) {
         content.innerHTML = '🤩👏';
         content.className = 'celebration-content';
-        audioLevelComplete.play();
+        audioLevelComplete.currentTime = 0; audioLevelComplete.play().catch(() => {});
 
         audioLevelComplete.onended = () => {
             overlay.classList.add('hidden');
